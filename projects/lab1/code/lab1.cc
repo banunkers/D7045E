@@ -178,7 +178,7 @@ namespace Lab1 {
 			if (depth == 0) {
 				return;
 			} else {
-				
+				// vector<GLfloat> first = 
 			}
 	}
 }
