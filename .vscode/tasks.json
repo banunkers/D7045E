@@ -29,7 +29,7 @@
 			"presentation": {
 				"showReuseMessage": false,
 				"reveal": "silent",
-		   }
+		   },
 		},
 		{
 			"label": "run",
@@ -48,8 +48,9 @@
 			"dependsOn": [
 				"cmake",
 				"make",
-				"run"
+				"run",
 			],
+			"dependsOrder": "sequence",
 			"problemMatcher": [
 				"$gcc"
 			]
