@@ -201,6 +201,6 @@ namespace Lab1 {
 	}
 
 	glm::vec3 midpoint(glm::vec3 p, glm::vec3 q) {
-		return glm::vec3{(p.x + q.x) / 2.0f, (p.y + q.y) / 2.0f, -1.0f};
+		return glm::vec3{(p.x + q.x)/2.0f, (p.y + q.y)/2.0f, -1.0f};
 	}
 }
