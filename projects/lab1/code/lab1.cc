@@ -12,29 +12,23 @@ const GLchar* vs =
 "#version 310 es\n"
 "precision mediump float;\n"
 "layout(location=0) in vec3 pos;\n"
-"layout(location=1) in vec4 color;\n"
-"layout(location=0) out vec4 Color;\n"
 "void main()\n"
 "{\n"
 "	gl_Position = vec4(pos, 1);\n"
-"	Color = color;\n"
 "}\n";
 
 const GLchar* ps =
 "#version 310 es\n"
 "precision mediump float;\n"
-"layout(location=0) in vec4 color;\n"
 "out vec4 Color;\n"
 "void main()\n"
 "{\n"
-"	Color = color;\n"
+"	Color = vec4(1, 0, 0, 0.25);\n"
 "}\n";
 
 const GLuint vertex_attrib_index = 0;
-const GLuint color_attrib_index = 1;
-const GLuint vertex_record = 7 * sizeof(float32);
+const GLuint vertex_record = 3 * sizeof(float32);
 const GLuint vertex_offset = 0 * sizeof(float32);
-const GLuint color_offset = 4 * sizeof(float32);
 
 using namespace Display;
 namespace Lab1 {
@@ -58,17 +52,9 @@ namespace Lab1 {
 		
 		this->vertices = {
 			-0.5f,	-0.5f,	-1,			// pos 0
-			0,		0,		1,		1,	// color 0
 			0,		0.5f,	-1,			// pos 1
-			0,		0,		1,		1,	// color 1
 			0.5f,	-0.5f,	-1,			// pos 2
-			0,		0,		1,		1,	// color 2
 			// 0.75f,	0.75f,	-1,			// pos 3
-			// 0,		0,		1,		1,	// color 3
-		};
-		this->indices = {
-			0, 1, 2,
-			// 1, 3, 2
 		};
 	
 
@@ -137,48 +123,79 @@ namespace Lab1 {
 			// The number of vertex in Koch Snowflake is the number of edges * 2
 			const int num_vertex = 2*num_edges;
 						
-			// Get the vertices and indices of the koch snowflake
-			// std::pair<std::vector<GLfloat>, std::vector<GLuint>> res = koch_snowflake(&this->vertices, &this->indices, 0);
-			// this->vertices = res.first;
-			// this->indices = res.second;
-			koch_snowflake(this->vertices, this->indices, 0);
+			// Get the vertices of the koch snowflake at input depth
+			glm::vec3 p0 = {-0.5f, -0.5f, -1.0f};
+			glm::vec3 p1 = {0.0f, 0.5f, -1.0f};
+			glm::vec3 p2 = {0.5f, -0.5f, -1.0f};
+			glm::vec3 m_p0_p1 = {(p0.x + p1.x)/2.0f, (p0.y + p1.y) / 2.0f, -1};
+			this->vertices = koch_snowflake(1, p0, p1, p2, m_p0_p1);
 
-			// Bind the new data to the buffer objects
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-			// setup ibo (index buffer object)
-			glGenBuffers(1, &this->ibo);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibo);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-			// Draw the snowflake at specified depth			
-			glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
 			glUseProgram(this->program);
 			glEnableVertexAttribArray(vertex_attrib_index);
-			glEnableVertexAttribArray(color_attrib_index);
-			glVertexAttribPointer(vertex_attrib_index, 3, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)(vertex_offset));
-			glVertexAttribPointer(color_attrib_index, 4, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)(color_offset));
+			glVertexAttribPointer(vertex_attrib_index, 3, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
 			
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibo);
-			glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			// debugg transperancy
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			// Draw the snowflake
+			glDrawArrays(GL_TRIANGLES, vertex_attrib_index, vertices.size() / 3);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			this->window->SwapBuffers();
 		}
 	}
 
-	// Calculates and returns the vertexes and indices given a recursion depth and starting vectors
-	// std::pair<std::vector<GLfloat>, std::vector<GLuint>>
-	void koch_snowflake(vector<GLfloat> vertices, vector<GLuint> indices, int depth) {
+	/**
+	 * Calculates the vertices of a Koch Snowflake at a specified depth
+	 * @param depth the recursion depth (starting at 0)
+	 * @param p0 first point of a edge
+	 * @param p1 second point of a edge
+	 * @param b helper base
+	 * @param m helper midpoint between p0 and  p1
+	*/
+	std::vector<GLfloat> koch_snowflake(int depth, glm::vec3 p0, glm::vec3 p1, glm::vec3 b, glm::vec3 m) {
 			if (depth == 0) {
-				return;
+				return {
+					p0.x, p0.y, p0.z,
+					p1.x, p1.y, p1.z,
+					b.x, b.y, b.z,
+				};
 			} else {
-				// vector<GLfloat> first = 
+				// Calculate point q0 and q1
+				glm::vec3 q0 = {(2*p0.x + p1.x)/3, (2*p0.y + p1.y)/3, p0.z};
+				glm::vec3 q1 = {(p0.x + 2*p1.x)/3, (p0.y + 2*p1.y)/3, p0.z};
+
+				// Calculate point a
+				float p0p1_mag = magnitude(p0, p1);
+				float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2) - powf(p0p1_mag/6.0f, 2));
+				glm::vec3 b_m_unit_vec = unit_vec(b, m);
+				// Point a will be a point which is offset from point m in the direction of b -> m by the height of m -> a
+				glm::vec3 a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y, -1};
+
+				return {
+					p0.x, p0.y, p0.z,
+					p1.x, p1.y, p1.y,
+					b.x, b.y, b.z,
+					q0.x, q0.y, q0.z,
+					a.x, a.y, a.z,
+					q1.x, q1.y, q1.z,
+				};
 			}
+	}
+
+	// Calculates the magnitude of the vector between two points p and q
+	float magnitude(glm::vec3 p, glm::vec3 q) {
+		return sqrtf(powf((q.x - p.x), 2) + powf((q.y - p.y), 2));
+	}
+
+	// Calculates the unit vector of the vector between two points p and q
+	glm::vec3 unit_vec(glm::vec3 p, glm::vec3 q) {
+		float mag = magnitude(p, q);
+		return glm::vec3{(q.x - p.x)/mag, (q.y - p.y)/mag, -1};
 	}
 }
