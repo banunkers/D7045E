@@ -32,4 +32,5 @@ namespace Lab1 {
 
 	glm::vec3 unit_vec(glm::vec3 p, glm::vec3 q);
 
+	glm::vec3 midpoint(glm::vec3 p, glm::vec3 q);
 }

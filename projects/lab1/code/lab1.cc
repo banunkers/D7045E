@@ -120,8 +120,16 @@ namespace Lab1 {
 			glm::vec3 p0 = {-0.5f, -0.5f, -1.0f};
 			glm::vec3 p1 = {0.0f, 0.5f, -1.0f};
 			glm::vec3 p2 = {0.5f, -0.5f, -1.0f};
-			glm::vec3 m_p0_p1 = {(p0.x + p1.x)/2.0f, (p0.y + p1.y) / 2.0f, -1};
-			this->vertices = koch_snowflake(2, p0, p1, p2, m_p0_p1);
+			glm::vec3 p0p1_m = midpoint(p0, p1);
+			glm::vec3 p1p2_m = midpoint(p1, p2);
+			glm::vec3 p2p0_m = midpoint(p2, p0);
+		
+			std::vector<GLfloat> edge1 = koch_snowflake(2, p0, p1, p2, p0p1_m);
+			std::vector<GLfloat> edge2 = koch_snowflake(2, p1, p2, p0, p1p2_m);
+			std::vector<GLfloat> edge3 = koch_snowflake(2, p2, p0, p1, p2p0_m);
+			edge1.insert(edge1.end(), edge2.begin(), edge2.end());
+			edge1.insert(edge1.end(), edge3.begin(), edge3.end());
+			vertices = edge1;
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -160,15 +168,15 @@ namespace Lab1 {
 				};
 			} else {
 				// Calculate point q0 and q1
-				glm::vec3 q0 = {(2*p0.x + p1.x)/3, (2*p0.y + p1.y)/3, p0.z};
-				glm::vec3 q1 = {(p0.x + 2*p1.x)/3, (p0.y + 2*p1.y)/3, p0.z};
+				glm::vec3 q0 = {(2.0f*p0.x + p1.x)/3.0f, (2.0f*p0.y + p1.y)/3.0f, p0.z};
+				glm::vec3 q1 = {(p0.x + 2.0f*p1.x)/3.0f, (p0.y + 2.0f*p1.y)/3.0f, p0.z};
 
 				// Calculate point a
 				float p0p1_mag = magnitude(p0, p1);
-				float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2) - powf(p0p1_mag/6.0f, 2));
+				float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2.0f) - powf(p0p1_mag/6.0f, 2.0f));
 				glm::vec3 b_m_unit_vec = unit_vec(b, m);
 				// Point a will be a point which is offset from point m in the direction of b -> m by the height of m -> a
-				glm::vec3 a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y, -1};
+				glm::vec3 a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y, -1.0f};
 
 				return {
 					p0.x, p0.y, p0.z,
@@ -183,12 +191,16 @@ namespace Lab1 {
 
 	// Calculates the magnitude of the vector between two points p and q
 	float magnitude(glm::vec3 p, glm::vec3 q) {
-		return sqrtf(powf((q.x - p.x), 2) + powf((q.y - p.y), 2));
+		return sqrtf(powf((q.x - p.x), 2.0f) + powf((q.y - p.y), 2.0f));
 	}
 
 	// Calculates the unit vector of the vector between two points p and q
 	glm::vec3 unit_vec(glm::vec3 p, glm::vec3 q) {
 		float mag = magnitude(p, q);
-		return glm::vec3{(q.x - p.x)/mag, (q.y - p.y)/mag, -1};
+		return glm::vec3{(q.x - p.x)/mag, (q.y - p.y)/mag, -1.0f};
+	}
+
+	glm::vec3 midpoint(glm::vec3 p, glm::vec3 q) {
+		return glm::vec3{(p.x + q.x) / 2.0f, (p.y + q.y) / 2.0f, -1.0f};
 	}
 }
