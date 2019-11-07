@@ -49,13 +49,12 @@ namespace Lab1 {
 		});
 		window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
 		
-		
-		this->vertices = {
-			-0.5f,	-0.5f,	-1,			// pos 0
-			0,		0.5f,	-1,			// pos 1
-			0.5f,	-0.5f,	-1,			// pos 2
-			// 0.75f,	0.75f,	-1,			// pos 3
-		};
+		// this->vertices = {
+		// 	-0.5f,	-0.5f,	-1,			// pos 0
+		// 	0,		0.5f,	-1,			// pos 1
+		// 	0.5f,	-0.5f,	-1,			// pos 2
+		// 	// 0.75f,	0.75f,	-1,			// pos 3
+		// };
 	
 
 		if (this->window->Open()) {
@@ -116,19 +115,13 @@ namespace Lab1 {
 		while (this->window->IsOpen()) {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
-
-			// Koch config
-			const int depth = 1;
-			const int num_edges = 3*(pow(4, depth));
-			// The number of vertex in Koch Snowflake is the number of edges * 2
-			const int num_vertex = 2*num_edges;
 						
 			// Get the vertices of the koch snowflake at input depth
 			glm::vec3 p0 = {-0.5f, -0.5f, -1.0f};
 			glm::vec3 p1 = {0.0f, 0.5f, -1.0f};
 			glm::vec3 p2 = {0.5f, -0.5f, -1.0f};
 			glm::vec3 m_p0_p1 = {(p0.x + p1.x)/2.0f, (p0.y + p1.y) / 2.0f, -1};
-			this->vertices = koch_snowflake(1, p0, p1, p2, m_p0_p1);
+			this->vertices = koch_snowflake(2, p0, p1, p2, m_p0_p1);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -152,14 +145,14 @@ namespace Lab1 {
 
 	/**
 	 * Calculates the vertices of a Koch Snowflake at a specified depth
-	 * @param depth the recursion depth (starting at 0)
+	 * @param depth the recursion depth (starting at 1)
 	 * @param p0 first point of a edge
 	 * @param p1 second point of a edge
 	 * @param b helper base
 	 * @param m helper midpoint between p0 and  p1
 	*/
 	std::vector<GLfloat> koch_snowflake(int depth, glm::vec3 p0, glm::vec3 p1, glm::vec3 b, glm::vec3 m) {
-			if (depth == 0) {
+			if (depth <= 1) {
 				return {
 					p0.x, p0.y, p0.z,
 					p1.x, p1.y, p1.z,
