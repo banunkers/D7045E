@@ -11,10 +11,10 @@
 const GLchar* vs =
 "#version 310 es\n"
 "precision mediump float;\n"
-"layout(location=0) in vec3 pos;\n"
+"layout(location=0) in vec2 pos;\n"
 "void main()\n"
 "{\n"
-"	gl_Position = vec4(pos, 1);\n"
+"	gl_Position = vec4(pos, -1, 1);\n"
 "}\n";
 
 const GLchar* ps =
@@ -27,7 +27,7 @@ const GLchar* ps =
 "}\n";
 
 const GLuint vertex_attrib_index = 0;
-const GLuint vertex_record = 3 * sizeof(float32);
+const GLuint vertex_record = 2 * sizeof(float32);
 const GLuint vertex_offset = 0 * sizeof(float32);
 
 using namespace Display;
@@ -76,10 +76,9 @@ namespace Lab1 {
 		window->SetSize(2*width, 2*height);
 		
 		this->vertices = {
-			-0.5f,	-0.5f,	-1,			// pos 0
-			0,		0.5f,	-1,			// pos 1
-			0.5f,	-0.5f,	-1,			// pos 2
-			// 0.75f,	0.75f,	-1,			// pos 3
+			-0.5f,	-0.5f,	// pos 0
+			0,		0.5f,	// pos 1
+			0.5f,	-0.5f,	// pos 2
 		};
 	
 
@@ -148,7 +147,7 @@ namespace Lab1 {
 			Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
 
 			// get the koch snowflake vertices given the starting triangle 
-			vertices = koch_snowflake(3, p0, p1, p2);
+			vertices = koch_snowflake(2, p0, p1, p2);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -156,14 +155,14 @@ namespace Lab1 {
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 			glUseProgram(this->program);
 			glEnableVertexAttribArray(vertex_attrib_index);
-			glVertexAttribPointer(vertex_attrib_index, 3, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
+			glVertexAttribPointer(vertex_attrib_index, 2, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
 			
 			// debugg transperancy
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			// Draw the snowflake
-			glDrawArrays(GL_TRIANGLES, vertex_attrib_index, vertices.size() / 3);
+			glDrawArrays(GL_TRIANGLES, vertex_attrib_index, vertices.size() / 2);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			this->window->SwapBuffers();
@@ -179,25 +178,31 @@ namespace Lab1 {
 	*/
 	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2) {
 		std::vector<float> snowflake = {
-			p0.x, p0.y, -1.0f,
-			p1.x, p1.y, -1.0f,
-			p2.x, p2.y, -1.0f,
+			p0.x, p0.y,
+			p1.x, p1.y,
+			p2.x, p2.y,
 		};
 
 		if (depth <= 1) {
 			return snowflake;
 		} else {
-			// Get the new triangles on every edge and calculate Koch on each new parts at depth-1
-			// First edge 
+			// Get the new triangles on every edge
 			Triangle fe_trig = calc_triangle(depth, p0, p1, p2);
+			Triangle se_trig = calc_triangle(depth, p1, p2, p0);
+			Triangle te_trig = calc_triangle(depth, p2, p0, p1);
+
+			// Calculate Koch of the new triangles
+			// First edge
 			std::vector<float> fe_q0_a = koch_snowflake(depth - 1, fe_trig.q0, fe_trig.a, fe_trig.q1);
 			std::vector<float> fe_a_q1 = koch_snowflake(depth - 1, fe_trig.a, fe_trig.q1, fe_trig.q0);
+			std::vector<float> fe_p0_q0 = koch_snowflake(depth -1, p0, fe_trig.q0 ,te_trig.q1);
+
 			// Append results to entire snowflake
 			snowflake.insert(snowflake.end(), fe_q0_a.begin(), fe_q0_a.end());
 			snowflake.insert(snowflake.end(), fe_a_q1.begin(), fe_a_q1.end());
+			snowflake.insert(snowflake.end(), fe_p0_q0.begin(), fe_p0_q0.end());
 			
 			// Second edge
-			Triangle se_trig = calc_triangle(depth, p1, p2, p0);
 			std::vector<float> se_q0_a = koch_snowflake(depth - 1, se_trig.q0, se_trig.a, se_trig.q1);
 			std::vector<float> se_a_q1 = koch_snowflake(depth - 1, se_trig.a, se_trig.q1, se_trig.q0);
 
@@ -206,7 +211,6 @@ namespace Lab1 {
 			snowflake.insert(snowflake.end(), se_a_q1.begin(), se_a_q1.end());
 			
 
-			Triangle te_trig = calc_triangle(depth, p2, p0, p1);
 			std::vector<float> te_q0_a = koch_snowflake(depth - 1, te_trig.q0, te_trig.a, te_trig.q1);
 			std::vector<float> te_a_q1 = koch_snowflake(depth - 1, te_trig.a, te_trig.q1, te_trig.q0);
 
