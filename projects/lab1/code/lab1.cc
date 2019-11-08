@@ -32,9 +32,27 @@ const GLuint vertex_offset = 0 * sizeof(float32);
 
 using namespace Display;
 namespace Lab1 {
-	struct point {
+	
+	struct Point {
 		float x;
 		float y;
+
+		Point(float x, float y) {
+			this->x = x;
+			this->y = y;
+		}
+	};
+
+	struct Triangle {
+		Point q0 = Point(0, 0);
+		Point a = Point(0, 0);
+		Point q1 = Point(0, 0);
+
+		Triangle(Point q0, Point a, Point q1) {
+			this->q0 = q0;
+			this->a = a;
+			this->q1 = q1;
+		}
 	};
 
 	Lab1App::Lab1App() {
@@ -124,16 +142,13 @@ namespace Lab1 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 						
-			// Get the vertices of the koch snowflake at input depth
-			point p0 = {-0.866f/1.5f, -0.5f/1.5f};
-			point p1 = {0.866f/1.5f, -0.5f/1.5f};
-			point p2 = {0.0f/1.5f, 1.0f/1.5f};
-			std::vector<GLfloat> edge1 = koch_snowflake(2, p0, p1, p2);
-			std::vector<GLfloat> edge2 = koch_snowflake(2, p1, p2, p0);
-			std::vector<GLfloat> edge3 = koch_snowflake(2, p2, p0, p1);
-			edge1.insert(edge1.end(), edge2.begin(), edge2.end());
-			edge1.insert(edge1.end(), edge3.begin(), edge3.end());
-			vertices = edge1;
+			// Vertices of equilateral triangle
+			Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
+			Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
+			Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
+
+			// get the koch snowflake vertices given the starting triangle 
+			vertices = koch_snowflake(3, p0, p1, p2);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -156,58 +171,89 @@ namespace Lab1 {
 	}
 
 	/**
-	 * Calculates the vertices of a Koch Snowflake at a specified depth
+	 * @brief Creates a koch snowflake given the vertices of a equilateral triangle
+	 * @param depth the recusion depth
+	 * @param p0 vertex 
+	 * @param p1 vertex
+	 * @param p2 vertex
+	*/
+	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2) {
+		std::vector<float> snowflake = {
+			p0.x, p0.y, -1.0f,
+			p1.x, p1.y, -1.0f,
+			p2.x, p2.y, -1.0f,
+		};
+
+		if (depth <= 1) {
+			return snowflake;
+		} else {
+			// Get the new triangles on every edge and calculate Koch on each new parts at depth-1
+			// First edge 
+			Triangle fe_trig = calc_triangle(depth, p0, p1, p2);
+			std::vector<float> fe_q0_a = koch_snowflake(depth - 1, fe_trig.q0, fe_trig.a, fe_trig.q1);
+			std::vector<float> fe_a_q1 = koch_snowflake(depth - 1, fe_trig.a, fe_trig.q1, fe_trig.q0);
+			// Append results to entire snowflake
+			snowflake.insert(snowflake.end(), fe_q0_a.begin(), fe_q0_a.end());
+			snowflake.insert(snowflake.end(), fe_a_q1.begin(), fe_a_q1.end());
+			
+			// Second edge
+			Triangle se_trig = calc_triangle(depth, p1, p2, p0);
+			std::vector<float> se_q0_a = koch_snowflake(depth - 1, se_trig.q0, se_trig.a, se_trig.q1);
+			std::vector<float> se_a_q1 = koch_snowflake(depth - 1, se_trig.a, se_trig.q1, se_trig.q0);
+
+			// Append results to entire snowflake
+			snowflake.insert(snowflake.end(), se_q0_a.begin(), se_q0_a.end());
+			snowflake.insert(snowflake.end(), se_a_q1.begin(), se_a_q1.end());
+			
+
+			Triangle te_trig = calc_triangle(depth, p2, p0, p1);
+			std::vector<float> te_q0_a = koch_snowflake(depth - 1, te_trig.q0, te_trig.a, te_trig.q1);
+			std::vector<float> te_a_q1 = koch_snowflake(depth - 1, te_trig.a, te_trig.q1, te_trig.q0);
+
+			// Append results to entire snowflake
+			snowflake.insert(snowflake.end(), te_q0_a.begin(), te_q0_a.end());
+			snowflake.insert(snowflake.end(), te_a_q1.begin(), te_a_q1.end());
+
+			return snowflake;
+		}
+	}
+
+	/**
+	 * @brief Calculates the vertices of the next triangle in the koch snowflake at a specified depth
 	 * @param depth the recursion depth (starting at 1)
 	 * @param p0 first point of a edge
 	 * @param p1 second point of a edge
 	 * @param b helper base
 	 * @param m helper midpoint between p0 and  p1
 	*/
-	std::vector<float> koch_snowflake(int depth, point p0, point p1, point b) {
-			if (depth <= 1) {
-				return {
-					p0.x, p0.y, -1.0f,
-					p1.x, p1.y, -1.0f,
-					b.x, b.y, -1.0f,
-				};
-			} else {
-				point m = midpoint(p0, p1);
+	Triangle calc_triangle(int depth, Point p0, Point p1, Point b) {
+		Point m = midpoint(p0, p1);
 
-				// Calculate point q0 and q1
-				point q0 = {(2.0f*p0.x + p1.x)/3.0f, (2.0f*p0.y + p1.y)/3.0f};
-				point q1 = {(p0.x + 2.0f*p1.x)/3.0f, (p0.y + 2.0f*p1.y)/3.0f};
+		// q0 and q1: 1/3 and 2/3 away from p0
+		Point q0 = {(2.0f*p0.x + p1.x)/3.0f, (2.0f*p0.y + p1.y)/3.0f};
+		Point q1 = {(p0.x + 2.0f*p1.x)/3.0f, (p0.y + 2.0f*p1.y)/3.0f};
 
-				// Calculate point a
-				float p0p1_mag = magnitude(p0, p1);
-				float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2.0f) - powf(p0p1_mag/6.0f, 2.0f));
-				point b_m_unit_vec = unit_vec(b, m);
-				
-				// Point a will be a point which is offset from point m in the direction of b -> m by the height of m -> a
-				point a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y};
-
-				return {
-					p0.x, p0.y, -1.0f,
-					p1.x, p1.y, -1.0f,
-					b.x, b.y, -1.0f,
-					q0.x, q0.y, -1.0f,
-					a.x, a.y, -1.0f,
-					q1.x, q1.y, -1.0f,
-				};
-			}
+		// Point 'a' will be a point which is offset from Point 'm' in the direction of vector 'bm' by the height of vector 'ma'
+		float p0p1_mag = magnitude(p0, p1);
+		float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2.0f) - powf(p0p1_mag/6.0f, 2.0f));
+		Point b_m_unit_vec = unit_vec(b, m);
+		Point a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y};
+		
+		return Triangle(q0, a, q1);
 	}
 
 	// Calculates the magnitude of the vector between two points p and q
-	float magnitude(point p, point q) {
+	float magnitude(Point p, Point q) {
 		return sqrtf(powf(q.x - p.x, 2.0f) + powf(q.y - p.y, 2.0f));
 	}
 
 	// Calculates the unit vector of the vector between two points p and q
-	point unit_vec(point p, point q) {
+	Point unit_vec(Point p, Point q) {
 		float mag = magnitude(p, q);
-		return point{(q.x - p.x)/mag, (q.y - p.y)/mag};
+		return Point((q.x - p.x)/mag, (q.y - p.y)/mag);
 	}
 
-	point midpoint(point p, point q) {
-		return point{(p.x + q.x)/2.0f, (p.y + q.y)/2.0f};
+	Point midpoint(Point p, Point q) {
+		return Point((p.x + q.x)/2.0f, (p.y + q.y)/2.0f);
 	}
 }
