@@ -2,7 +2,7 @@
 
 #include "core/app.h"
 #include "render/window.h"
-#include <glm/vec3.hpp> // glm::vec3
+#include <glm/vec3.hpp> // point
 #include <vector>
 
 namespace Lab1 {
@@ -25,12 +25,14 @@ namespace Lab1 {
 			Display::Window* window;
 	};
 
+	struct point;
+
 	// std::pair<std::vector<GLfloat>, std::vector<GLuint>> koch_snowflake(vector<GLfloat> *vertices, vector<GLuint> *indices, int depth);
-	std::vector<GLfloat> koch_snowflake(int depth, glm::vec3 p0, glm::vec3 p1, glm::vec3 b, glm::vec3 m);
+	std::vector<float> koch_snowflake(int depth, point p0, point p1, point b);
 	
-	float magnitude(glm::vec3 p, glm::vec3 q);
+	float magnitude(point p, point q);
 
-	glm::vec3 unit_vec(glm::vec3 p, glm::vec3 q);
+	point unit_vec(point p, point q);
 
-	glm::vec3 midpoint(glm::vec3 p, glm::vec3 q);
+	point midpoint(point p, point q);
 }

@@ -32,6 +32,11 @@ const GLuint vertex_offset = 0 * sizeof(float32);
 
 using namespace Display;
 namespace Lab1 {
+	struct point {
+		float x;
+		float y;
+	};
+
 	Lab1App::Lab1App() {
 
 	}
@@ -48,13 +53,16 @@ namespace Lab1 {
 			this->window->Close();
 		});
 		window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
+		int32 width, height;
+		window->GetSize(width, height);
+		window->SetSize(2*width, 2*height);
 		
-		// this->vertices = {
-		// 	-0.5f,	-0.5f,	-1,			// pos 0
-		// 	0,		0.5f,	-1,			// pos 1
-		// 	0.5f,	-0.5f,	-1,			// pos 2
-		// 	// 0.75f,	0.75f,	-1,			// pos 3
-		// };
+		this->vertices = {
+			-0.5f,	-0.5f,	-1,			// pos 0
+			0,		0.5f,	-1,			// pos 1
+			0.5f,	-0.5f,	-1,			// pos 2
+			// 0.75f,	0.75f,	-1,			// pos 3
+		};
 	
 
 		if (this->window->Open()) {
@@ -117,16 +125,12 @@ namespace Lab1 {
 			this->window->Update();
 						
 			// Get the vertices of the koch snowflake at input depth
-			glm::vec3 p0 = {-0.5f, -0.5f, -1.0f};
-			glm::vec3 p1 = {0.0f, 0.5f, -1.0f};
-			glm::vec3 p2 = {0.5f, -0.5f, -1.0f};
-			glm::vec3 p0p1_m = midpoint(p0, p1);
-			glm::vec3 p1p2_m = midpoint(p1, p2);
-			glm::vec3 p2p0_m = midpoint(p2, p0);
-		
-			std::vector<GLfloat> edge1 = koch_snowflake(2, p0, p1, p2, p0p1_m);
-			std::vector<GLfloat> edge2 = koch_snowflake(2, p1, p2, p0, p1p2_m);
-			std::vector<GLfloat> edge3 = koch_snowflake(2, p2, p0, p1, p2p0_m);
+			point p0 = {-0.866f/1.5f, -0.5f/1.5f};
+			point p1 = {0.866f/1.5f, -0.5f/1.5f};
+			point p2 = {0.0f/1.5f, 1.0f/1.5f};
+			std::vector<GLfloat> edge1 = koch_snowflake(2, p0, p1, p2);
+			std::vector<GLfloat> edge2 = koch_snowflake(2, p1, p2, p0);
+			std::vector<GLfloat> edge3 = koch_snowflake(2, p2, p0, p1);
 			edge1.insert(edge1.end(), edge2.begin(), edge2.end());
 			edge1.insert(edge1.end(), edge3.begin(), edge3.end());
 			vertices = edge1;
@@ -159,48 +163,51 @@ namespace Lab1 {
 	 * @param b helper base
 	 * @param m helper midpoint between p0 and  p1
 	*/
-	std::vector<GLfloat> koch_snowflake(int depth, glm::vec3 p0, glm::vec3 p1, glm::vec3 b, glm::vec3 m) {
+	std::vector<float> koch_snowflake(int depth, point p0, point p1, point b) {
 			if (depth <= 1) {
 				return {
-					p0.x, p0.y, p0.z,
-					p1.x, p1.y, p1.z,
-					b.x, b.y, b.z,
+					p0.x, p0.y, -1.0f,
+					p1.x, p1.y, -1.0f,
+					b.x, b.y, -1.0f,
 				};
 			} else {
+				point m = midpoint(p0, p1);
+
 				// Calculate point q0 and q1
-				glm::vec3 q0 = {(2.0f*p0.x + p1.x)/3.0f, (2.0f*p0.y + p1.y)/3.0f, p0.z};
-				glm::vec3 q1 = {(p0.x + 2.0f*p1.x)/3.0f, (p0.y + 2.0f*p1.y)/3.0f, p0.z};
+				point q0 = {(2.0f*p0.x + p1.x)/3.0f, (2.0f*p0.y + p1.y)/3.0f};
+				point q1 = {(p0.x + 2.0f*p1.x)/3.0f, (p0.y + 2.0f*p1.y)/3.0f};
 
 				// Calculate point a
 				float p0p1_mag = magnitude(p0, p1);
 				float ma_height = sqrtf(powf(p0p1_mag/3.0f, 2.0f) - powf(p0p1_mag/6.0f, 2.0f));
-				glm::vec3 b_m_unit_vec = unit_vec(b, m);
+				point b_m_unit_vec = unit_vec(b, m);
+				
 				// Point a will be a point which is offset from point m in the direction of b -> m by the height of m -> a
-				glm::vec3 a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y, -1.0f};
+				point a = {m.x + ma_height*b_m_unit_vec.x, m.y + ma_height*b_m_unit_vec.y};
 
 				return {
-					p0.x, p0.y, p0.z,
-					p1.x, p1.y, p1.y,
-					b.x, b.y, b.z,
-					q0.x, q0.y, q0.z,
-					a.x, a.y, a.z,
-					q1.x, q1.y, q1.z,
+					p0.x, p0.y, -1.0f,
+					p1.x, p1.y, -1.0f,
+					b.x, b.y, -1.0f,
+					q0.x, q0.y, -1.0f,
+					a.x, a.y, -1.0f,
+					q1.x, q1.y, -1.0f,
 				};
 			}
 	}
 
 	// Calculates the magnitude of the vector between two points p and q
-	float magnitude(glm::vec3 p, glm::vec3 q) {
-		return sqrtf(powf((q.x - p.x), 2.0f) + powf((q.y - p.y), 2.0f));
+	float magnitude(point p, point q) {
+		return sqrtf(powf(q.x - p.x, 2.0f) + powf(q.y - p.y, 2.0f));
 	}
 
 	// Calculates the unit vector of the vector between two points p and q
-	glm::vec3 unit_vec(glm::vec3 p, glm::vec3 q) {
+	point unit_vec(point p, point q) {
 		float mag = magnitude(p, q);
-		return glm::vec3{(q.x - p.x)/mag, (q.y - p.y)/mag, -1.0f};
+		return point{(q.x - p.x)/mag, (q.y - p.y)/mag};
 	}
 
-	glm::vec3 midpoint(glm::vec3 p, glm::vec3 q) {
-		return glm::vec3{(p.x + q.x)/2.0f, (p.y + q.y)/2.0f, -1.0f};
+	point midpoint(point p, point q) {
+		return point{(p.x + q.x)/2.0f, (p.y + q.y)/2.0f};
 	}
 }
