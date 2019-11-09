@@ -73,7 +73,7 @@ namespace Lab1 {
 		window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
 		int32 width, height;
 		window->GetSize(width, height);
-		window->SetSize(2*width, 2*height);
+		window->SetSize(1500, 1500);
 		
 		this->vertices = {
 			-0.5f,	-0.5f,	// pos 0
