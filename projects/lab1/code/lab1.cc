@@ -147,7 +147,7 @@ namespace Lab1 {
 			Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
 
 			// get the koch snowflake vertices given the starting triangle 
-			vertices = koch_snowflake(4, p0, p1, p2, false);
+			vertices = koch_snowflake(2, p0, p1, p2, false);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -183,11 +183,12 @@ namespace Lab1 {
 	 * @param one_edge if the koch snowflake should be calculated for only the first edge p0p1
 	*/
 	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2, bool one_edge) {
-			std::vector<float> snowflake = {
-				p0.x, p0.y,
-				p1.x, p1.y,
-				p2.x, p2.y,
-			};
+		std::vector<float> snowflake = {
+			p0.x, p0.y,
+			p1.x, p1.y,
+			p2.x, p2.y,
+		};
+		
 		if (depth <= 1) {
 			return snowflake;
 		} else {
