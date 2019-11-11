@@ -28,7 +28,7 @@ namespace Lab1 {
 	struct Point; 
 	struct Triangle;
 
-	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2);
+	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2, bool one_edge);
 
 	Triangle calc_triangle(int depth, Point p0, Point p1, Point b);
 	
