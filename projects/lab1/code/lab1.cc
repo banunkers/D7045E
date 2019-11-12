@@ -23,7 +23,7 @@ const GLchar* ps =
 "out vec4 Color;\n"
 "void main()\n"
 "{\n"
-"	Color = vec4(1, 0, 0, 0.25);\n"
+"	Color = vec4(1, 0, 0, 1);\n"
 "}\n";
 
 const GLuint vertex_attrib_index = 0;
@@ -71,16 +71,7 @@ namespace Lab1 {
 			this->window->Close();
 		});
 		window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
-		int32 width, height;
-		window->GetSize(width, height);
 		window->SetSize(1500, 1500);
-		
-		this->vertices = {
-			-0.5f,	-0.5f,	// pos 0
-			0,		0.5f,	// pos 1
-			0.5f,	-0.5f,	// pos 2
-		};
-	
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
@@ -141,13 +132,13 @@ namespace Lab1 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 						
-			// Vertices of equilateral triangle
+			// Vertices of equilateral starting triangle
 			Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
 			Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
 			Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
 
 			// get the koch snowflake vertices given the starting triangle 
-			vertices = koch_snowflake(2, p0, p1, p2, false);
+			vertices = koch_snowflake(3, p0, p1, p2, false);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
@@ -162,13 +153,9 @@ namespace Lab1 {
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			// Draw the snowflake
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			glDrawArrays(GL_TRIANGLES, vertex_attrib_index, vertices.size() / 2);
+			glLineWidth(5);
+			glDrawArrays(GL_LINE_LOOP, vertex_attrib_index, vertices.size()/2);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-			// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			// glDrawArrays(GL_TRIANGLES, vertex_attrib_index, vertices.size() / 2);
-			// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			this->window->SwapBuffers();
 		}
@@ -183,15 +170,21 @@ namespace Lab1 {
 	 * @param one_edge if the koch snowflake should be calculated for only the first edge p0p1
 	*/
 	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2, bool one_edge) {
-		std::vector<float> snowflake = {
-			p0.x, p0.y,
-			p1.x, p1.y,
-			p2.x, p2.y,
-		};
-		
 		if (depth <= 1) {
-			return snowflake;
+			if (one_edge) {
+				return {
+					p0.x, p0.y,
+					p1.x, p1.y,
+				};
+			} else {
+				return {
+					p0.x, p0.y,
+					p1.x, p1.y,
+					p2.x, p2.y,
+				};
+			}
 		} else {
+			std::vector<float> snowflake;
 			if (!one_edge) {
 				// Calc the new triangles on every edge
 				Triangle fe_trig = calc_triangle(depth, p0, p1, p2);
@@ -209,11 +202,13 @@ namespace Lab1 {
 				auto fe_p0_q0 = koch_snowflake(depth -1, p0, fe_trig.q0, te_trig.q1, true);
 				auto fe_q1_p1 = koch_snowflake(depth -1, fe_trig.q1, p1, se_trig.q0, true);
 
-				// Append results to entire snowflake
+				// Append results inbetween edge p0p1
+				snowflake = {p0.x, p0.y};
+				snowflake.insert(snowflake.end(), fe_p0_q0.begin(), fe_p0_q0.end());
 				snowflake.insert(snowflake.end(), fe_q0_a.begin(), fe_q0_a.end());
 				snowflake.insert(snowflake.end(), fe_a_q1.begin(), fe_a_q1.end());
-				snowflake.insert(snowflake.end(), fe_p0_q0.begin(), fe_p0_q0.end());
 				snowflake.insert(snowflake.end(), fe_q1_p1.begin(), fe_q1_p1.end());
+				snowflake.insert(snowflake.end(), {p1.x, p1.y});
 				
 				// Second edge
 				auto se_q0_a = koch_snowflake(depth - 1, se_trig.q0, se_trig.a, se_trig.q1, true);
@@ -221,11 +216,12 @@ namespace Lab1 {
 				auto se_p1_q0 = koch_snowflake(depth -1, p1, se_trig.q0, fe_trig.q1, true);
 				auto se_q1_p2 = koch_snowflake(depth -1, se_trig.q1, p2, te_trig.q0, true);
 
-				// Append results to entire snowflake
+				// Append results inbetween edge p1p2
+				snowflake.insert(snowflake.end(), se_p1_q0.begin(), se_p1_q0.end());
 				snowflake.insert(snowflake.end(), se_q0_a.begin(), se_q0_a.end());
 				snowflake.insert(snowflake.end(), se_a_q1.begin(), se_a_q1.end());
-				snowflake.insert(snowflake.end(), se_p1_q0.begin(), se_p1_q0.end());
 				snowflake.insert(snowflake.end(), se_q1_p2.begin(), se_q1_p2.end());
+				snowflake.insert(snowflake.end(), {p2.x, p2.y});
 
 				// Third edge
 				auto te_q0_a = koch_snowflake(depth - 1, te_trig.q0, te_trig.a, te_trig.q1, true);
@@ -233,10 +229,10 @@ namespace Lab1 {
 				auto te_p2_q0 = koch_snowflake(depth -1, p2, te_trig.q0, se_trig.q1, true);
 				auto te_q1_p0 = koch_snowflake(depth -1, te_trig.q1, p0, fe_trig.q0, true);
 
-				// Append results to entire snowflake
+				// Append results inbetween endge p2p0
+				snowflake.insert(snowflake.end(), te_p2_q0.begin(), te_p2_q0.end());
 				snowflake.insert(snowflake.end(), te_q0_a.begin(), te_q0_a.end());
 				snowflake.insert(snowflake.end(), te_a_q1.begin(), te_a_q1.end());
-				snowflake.insert(snowflake.end(), te_p2_q0.begin(), te_p2_q0.end());
 				snowflake.insert(snowflake.end(), te_q1_p0.begin(), te_q1_p0.end());
 			} else {	// Only one edge p0p1
 				Triangle trig = calc_triangle(depth, p0, p1, p2);
@@ -249,11 +245,13 @@ namespace Lab1 {
 				auto p0_q0 = koch_snowflake(depth -1, p0, trig.q0, te_trig.q1, true);
 				auto q1_p1 = koch_snowflake(depth -1, trig.q1, p1, se_trig.q0, true);
 
-				// Append results to entire snowflake
+				// Append results between edge p0p1
+				snowflake = {p0.x, p0.y};
+				snowflake.insert(snowflake.end(), p0_q0.begin(), p0_q0.end());
 				snowflake.insert(snowflake.end(), q0_a.begin(), q0_a.end());
 				snowflake.insert(snowflake.end(), a_q1.begin(), a_q1.end());
-				snowflake.insert(snowflake.end(), p0_q0.begin(), p0_q0.end());
 				snowflake.insert(snowflake.end(), q1_p1.begin(), q1_p1.end());
+				snowflake.insert(snowflake.end(), {p1.x, p1.y});
 			}
 			
 			return snowflake;
@@ -266,7 +264,6 @@ namespace Lab1 {
 	 * @param p0 first point of a edge
 	 * @param p1 second point of a edge
 	 * @param b helper base
-	 * @param m helper midpoint between p0 and  p1
 	*/
 	Triangle calc_triangle(int depth, Point p0, Point p1, Point b) {
 		Point m = midpoint(p0, p1);
