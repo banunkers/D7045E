@@ -1,5 +1,6 @@
 #include "config.h"
 #include "lab1.h"
+#include "SDL2/SDL.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -67,11 +68,26 @@ namespace Lab1 {
 		App::Open();
 
 		this->window = new Display::Window;
-		window->SetKeyPressFunction([this](int32, int32, int32, int32) {
-			this->window->Close();
+		this->window->SetKeyPressFunction([this](int32 key, int32 scancode, int32 action, int32 mods) {
+			if (key == 256) {	// key ESC
+				this->window->Close();
+			} else if (key > 48 && key < 58) {// key 1-9
+				auto num = key - 48;	// Get the specific number pressed
+				
+				// Vertices of equilateral starting triangle
+				Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
+				Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
+				Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
+
+				// get the koch snowflake vertices given the starting triangle 
+				vertices = koch_snowflake(num, p0, p1, p2, false);
+			}
 		});
-		window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
-		window->SetSize(1500, 1500);
+
+		// SDL_KeyboardEvent();
+
+		this->window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
+		this->window->SetSize(1500, 1500);
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
@@ -131,19 +147,11 @@ namespace Lab1 {
 		while (this->window->IsOpen()) {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
-						
-			// Vertices of equilateral starting triangle
-			Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
-			Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
-			Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
-
-			// get the koch snowflake vertices given the starting triangle 
-			vertices = koch_snowflake(3, p0, p1, p2, false);
 
 			// setup vbo (vertex buffer object)
 			glGenBuffers(1, &this->vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_DYNAMIC_DRAW);
 			glUseProgram(this->program);
 			glEnableVertexAttribArray(vertex_attrib_index);
 			glVertexAttribPointer(vertex_attrib_index, 2, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
