@@ -56,6 +56,11 @@ namespace Lab1 {
 		}
 	};
 
+	// Vertices of equilateral starting triangle
+	Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
+	Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
+	Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
+
 	Lab1App::Lab1App() {
 
 	}
@@ -73,18 +78,12 @@ namespace Lab1 {
 				this->window->Close();
 			} else if (key > 48 && key < 58) {// key 1-9
 				auto num = key - 48;	// Get the specific number pressed
-				
-				// Vertices of equilateral starting triangle
-				Point p0 = Point(-0.866f/1.5f, -0.5f/1.5f);
-				Point p1 = Point(0.0f/1.5f, 1.0f/1.5f);
-				Point p2 = Point(0.866f/1.5f, -0.5f/1.5f);
 
-				// get the koch snowflake vertices given the starting triangle 
+				// get the koch snowflake vertices given the starting triangle
+				// gl set to dynamic draw so will change when buffer data changes
 				vertices = koch_snowflake(num, p0, p1, p2, false);
 			}
 		});
-
-		// SDL_KeyboardEvent();
 
 		this->window->SetTitle(std::string("Lab1: 2D Koch Snowflake"));
 		this->window->SetSize(1500, 1500);
@@ -144,6 +143,9 @@ namespace Lab1 {
 	}
 
 	void Lab1App::Run() {
+		// Start displaying depth 1 snowflake
+		vertices = koch_snowflake(1, p0, p1, p2, false);
+
 		while (this->window->IsOpen()) {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
@@ -157,10 +159,10 @@ namespace Lab1 {
 			glVertexAttribPointer(vertex_attrib_index, 2, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
 			
 			// debugg transperancy
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			// glEnable(GL_BLEND);
+			// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			// Draw the snowflake
+			// Draw the snowflake outline
 			glLineWidth(5);
 			glDrawArrays(GL_LINE_LOOP, vertex_attrib_index, vertices.size()/2);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
