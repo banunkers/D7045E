@@ -207,9 +207,9 @@ namespace Lab1 {
 				* 
 				*/
 				// First edge
+				auto fe_p0_q0 = koch_snowflake(depth -1, p0, fe_trig.q0, te_trig.q1, true);
 				auto fe_q0_a = koch_snowflake(depth - 1, fe_trig.q0, fe_trig.a, fe_trig.q1, true);
 				auto fe_a_q1 = koch_snowflake(depth - 1, fe_trig.a, fe_trig.q1, fe_trig.q0, true);
-				auto fe_p0_q0 = koch_snowflake(depth -1, p0, fe_trig.q0, te_trig.q1, true);
 				auto fe_q1_p1 = koch_snowflake(depth -1, fe_trig.q1, p1, se_trig.q0, true);
 
 				// Append results inbetween edge p0p1
@@ -234,9 +234,9 @@ namespace Lab1 {
 				snowflake.insert(snowflake.end(), {p2.x, p2.y});
 
 				// Third edge
+				auto te_p2_q0 = koch_snowflake(depth -1, p2, te_trig.q0, se_trig.q1, true);
 				auto te_q0_a = koch_snowflake(depth - 1, te_trig.q0, te_trig.a, te_trig.q1, true);
 				auto te_a_q1 = koch_snowflake(depth - 1, te_trig.a, te_trig.q1, te_trig.q0, true);
-				auto te_p2_q0 = koch_snowflake(depth -1, p2, te_trig.q0, se_trig.q1, true);
 				auto te_q1_p0 = koch_snowflake(depth -1, te_trig.q1, p0, fe_trig.q0, true);
 
 				// Append results inbetween endge p2p0
@@ -250,9 +250,9 @@ namespace Lab1 {
 				Triangle se_trig = calc_triangle(depth, p1, p2, p0);
 				Triangle te_trig = calc_triangle(depth, p2, p0, p1);
 				
+				auto p0_q0 = koch_snowflake(depth -1, p0, trig.q0, te_trig.q1, true);
 				auto q0_a = koch_snowflake(depth - 1, trig.q0, trig.a, trig.q1, true);
 				auto a_q1 = koch_snowflake(depth - 1, trig.a, trig.q1, trig.q0, true);
-				auto p0_q0 = koch_snowflake(depth -1, p0, trig.q0, te_trig.q1, true);
 				auto q1_p1 = koch_snowflake(depth -1, trig.q1, p1, se_trig.q0, true);
 
 				// Append results between edge p0p1
