@@ -136,6 +136,10 @@ namespace Lab1 {
 				printf("[PROGRAM LINK ERROR]: %s", buf);
 				delete[] buf;
 			}
+
+			// setup array buffer
+			glGenBuffers(1, &this->buff);
+
 			return true;
 		}
 		return false;
@@ -149,10 +153,8 @@ namespace Lab1 {
 		while (this->window->IsOpen()) {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
-
-			// setup vbo (vertex buffer object)
-			glGenBuffers(1, &this->vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
+			
+			glBindBuffer(GL_ARRAY_BUFFER, this->buff);
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_DYNAMIC_DRAW);
 			glUseProgram(this->program);
 			glEnableVertexAttribArray(vertex_attrib_index);

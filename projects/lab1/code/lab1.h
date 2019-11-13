@@ -20,7 +20,7 @@ namespace Lab1 {
 			GLuint program;
 			GLuint vertexShader;
 			GLuint pixelShader;
-			GLuint vbo;
+			GLuint buff;
 			std::vector<GLfloat> vertices;
 			Display::Window* window;
 	};
