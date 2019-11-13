@@ -80,7 +80,6 @@ namespace Lab1 {
 				auto num = key - 48;	// Get the specific number pressed
 
 				// get the koch snowflake vertices given the starting triangle
-				// gl set to dynamic draw so will change when buffer data changes
 				vertices = koch_snowflake(num, p0, p1, p2, false);
 			}
 		});
@@ -139,6 +138,10 @@ namespace Lab1 {
 
 			// setup array buffer
 			glGenBuffers(1, &this->buff);
+			glUseProgram(this->program);
+			glBindBuffer(GL_ARRAY_BUFFER, this->buff);
+			glEnableVertexAttribArray(vertex_attrib_index);
+			glVertexAttribPointer(vertex_attrib_index, 2, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
 
 			return true;
 		}
@@ -154,12 +157,10 @@ namespace Lab1 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 			
+			// Set data to koch snowflake vertices
 			glBindBuffer(GL_ARRAY_BUFFER, this->buff);
-			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_DYNAMIC_DRAW);
-			glUseProgram(this->program);
-			glEnableVertexAttribArray(vertex_attrib_index);
-			glVertexAttribPointer(vertex_attrib_index, 2, GL_FLOAT, GL_FALSE, vertex_record, (GLvoid*)vertex_offset);
-			
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+
 			// debugg transperancy
 			// glEnable(GL_BLEND);
 			// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
