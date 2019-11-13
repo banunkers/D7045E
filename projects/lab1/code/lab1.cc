@@ -161,7 +161,7 @@ namespace Lab1 {
 			glBindBuffer(GL_ARRAY_BUFFER, this->buff);
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 
-			// debugg transperancy
+			// debugg transparancy
 			// glEnable(GL_BLEND);
 			// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -200,9 +200,9 @@ namespace Lab1 {
 			std::vector<float> snowflake;
 			if (!one_edge) {
 				// Calc the new triangles on every edge
-				Triangle fe_trig = calc_triangle(depth, p0, p1, p2);
-				Triangle se_trig = calc_triangle(depth, p1, p2, p0);
-				Triangle te_trig = calc_triangle(depth, p2, p0, p1);
+				Triangle fe_trig = calc_triangle(p0, p1, p2);
+				Triangle se_trig = calc_triangle(p1, p2, p0);
+				Triangle te_trig = calc_triangle(p2, p0, p1);
 
 				/* 
 				* 
@@ -248,10 +248,10 @@ namespace Lab1 {
 				snowflake.insert(snowflake.end(), te_a_q1.begin(), te_a_q1.end());
 				snowflake.insert(snowflake.end(), te_q1_p0.begin(), te_q1_p0.end());
 			} else {	// Only one edge p0p1
-				Triangle trig = calc_triangle(depth, p0, p1, p2);
+				Triangle trig = calc_triangle(p0, p1, p2);
 				// Helper triangles used as base for next iterion of edges
-				Triangle se_trig = calc_triangle(depth, p1, p2, p0);
-				Triangle te_trig = calc_triangle(depth, p2, p0, p1);
+				Triangle se_trig = calc_triangle(p1, p2, p0);
+				Triangle te_trig = calc_triangle(p2, p0, p1);
 				
 				auto p0_q0 = koch_snowflake(depth -1, p0, trig.q0, te_trig.q1, true);
 				auto q0_a = koch_snowflake(depth - 1, trig.q0, trig.a, trig.q1, true);
@@ -273,12 +273,11 @@ namespace Lab1 {
 
 	/**
 	 * @brief Calculates the vertices of the next triangle in the koch snowflake at a specified depth
-	 * @param depth the recursion depth (starting at 1)
 	 * @param p0 first point of a edge
 	 * @param p1 second point of a edge
 	 * @param b helper base
 	*/
-	Triangle calc_triangle(int depth, Point p0, Point p1, Point b) {
+	Triangle calc_triangle(Point p0, Point p1, Point b) {
 		Point m = midpoint(p0, p1);
 
 		// q0 and q1: 1/3 and 2/3 away from p0

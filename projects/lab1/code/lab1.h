@@ -30,7 +30,7 @@ namespace Lab1 {
 
 	std::vector<float> koch_snowflake(int depth, Point p0, Point p1, Point p2, bool one_edge);
 
-	Triangle calc_triangle(int depth, Point p0, Point p1, Point b);
+	Triangle calc_triangle(Point p0, Point p1, Point b);
 	
 	float magnitude(Point p, Point q);
 
