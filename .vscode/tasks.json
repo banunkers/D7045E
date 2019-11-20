@@ -1,0 +1,59 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558 
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "cmake",
+			"type": "shell",
+			"options": {
+				"cwd": "${workspaceRoot}"
+			},
+			"command": "cmake",
+			"args": [
+				"${workspaceRoot}"
+			],
+			"presentation": {
+				"showReuseMessage": false,
+				"reveal": "silent",
+		   },
+		   
+		},
+		{
+			"label": "make",
+			"type": "shell",
+			"options": {
+				"cwd": "${workspaceRoot}"
+			},
+			"command": "make",
+			"presentation": {
+				"showReuseMessage": false,
+				"reveal": "silent",
+		   },
+		},
+		{
+			"label": "run",
+			"type": "shell",
+			"options": {
+				"cwd": "${workspaceRoot}/projects/lab1"
+			},
+			"command": "./lab1",
+			"presentation": {
+				"showReuseMessage": false,
+				"reveal": "always",
+		   }
+		},
+		{
+			"label": "build",
+			"dependsOn": [
+				"cmake",
+				"make",
+				"run",
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
+	]
+}
