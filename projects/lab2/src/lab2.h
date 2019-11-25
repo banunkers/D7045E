@@ -23,4 +23,6 @@ namespace Lab2 {
 	};
 
 	std::vector<glm::vec2> readPointsFromFile();
+	
+	bool validatePointSet(std::vector<glm::vec2> pointSet);
 }

@@ -49,7 +49,12 @@ namespace Lab2 {
 			if (key == 256 && action == GLFW_PRESS) {	// key ESC
 				this->window->Close();
 			} else if (key == 73 && action == GLFW_PRESS) { // key 'I' = input
-				readPointsFromFile();
+				auto inputPointSet = readPointsFromFile();
+				auto pointSetValid = validatePointSet(inputPointSet);
+
+				if (!pointSetValid) {
+					this->window->Close();
+				}
 			} 
 		});
 		this->window->SetTitle(std::string("Lab 2"));
@@ -144,18 +149,46 @@ namespace Lab2 {
 	std::vector<glm::vec2> readPointsFromFile() {
 		std::ifstream inFile;
 		std::string line;
+		std::vector<glm::vec2> points = {};
 
 		inFile.open("input.txt");
-
 		if (!inFile) {
 			std::cout << "Unable to open input file 'input.txt'\n";
 		}
-
+		
+		bool firstLine = true;
 		while (std::getline(inFile, line)) {
-			std::cout << line << "\n";
+			if (firstLine) {
+				if (std::stoi(line) < 3) {
+					std::cout << "Invalid input point set: First line is not the number of points or the number of points is < 3" << "\n";
+					inFile.close();
+					exit(0);
+				}
+				firstLine = false;
+			} else {
+				// Find white space seperated x and y cordinate (float) of a point on the input line
+				auto whiteSpace = line.find(' ');
+				float x = std::stof(line.substr(0, whiteSpace));
+				float y = std::stof(line.substr(whiteSpace + 1, line.size()));
+				glm::vec2 point = {x, y};
+				points.push_back(point);
+			}
 		}
 
 		inFile.close();
-		return {};
+		return points;
+	}
+
+	bool validatePointSet(std::vector<glm::vec2> pointSet) {
+		// Check for duplicate points
+		for (int point = 0; point < pointSet.size(); point++) {
+			for (int i = point + 1; i < pointSet.size(); i++) {
+				if (pointSet[point] == pointSet[i]) {
+					std::cout << "Invalid input: Point set contains a duplicate point with coordinates (" + std::to_string(pointSet[point].x)
+					+ ", " + std::to_string(pointSet[point].y) + ")\n";
+					return false;
+				}
+			}
+		}
 	}
 }
