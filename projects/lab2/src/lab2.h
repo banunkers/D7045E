@@ -20,9 +20,12 @@ namespace Lab2 {
 			GLuint buf;
 			std::vector<glm::vec2> points;
 			Display::Window* window;
+			std::string numInput;
 	};
 
 	std::vector<glm::vec2> readPointsFromFile();
+
+	std::vector<glm::vec2> randomPointSet(int numPoints);
 	
 	int validatePointSet(std::vector<glm::vec2> pointSet);
 }

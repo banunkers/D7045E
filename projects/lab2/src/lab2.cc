@@ -1,6 +1,8 @@
 #include "config.h"
 #include "lab2.h"
 #include "SDL2/SDL.h"
+#include "imgui.h"
+#include "imgui_impl_glfw_gl3.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -9,7 +11,6 @@
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -46,9 +47,9 @@ namespace Lab2 {
 
 		this->window = new Display::Window;
 		this->window->SetKeyPressFunction([this](int32 key, int32 scancode, int32 action, int32 mods) {
-			if (key == 256 && action == GLFW_PRESS) {	// key ESC
+			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 				this->window->Close();
-			} else if (key == 73 && action == GLFW_PRESS) { // key 'I' = input
+			} else if (key == GLFW_KEY_I && action == GLFW_PRESS) {
 				auto inputPointSet = readPointsFromFile();
 				auto pointSetError = validatePointSet(inputPointSet);
 
@@ -64,10 +65,29 @@ namespace Lab2 {
 				} else {
 					this->points = inputPointSet;
 				}
-			} 
+			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+				std::cout << "Enter a number n >= 3 and press enter\n";
+				this->numInput = "";
+			} else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9 && action == GLFW_PRESS) {
+				std::string pressedNum = std::to_string(key - 48);
+				this->numInput += pressedNum;
+			} else if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+				std::cout << this->numInput + "\n";
+				int numPoints = std::stoi(numInput);
+				
+				// Generate a ok random point set
+				auto randomSet = randomPointSet(numPoints);
+				auto pointSetError = validatePointSet(randomSet);
+				while (pointSetError) {
+					randomSet = randomPointSet(numPoints);
+					pointSetError = validatePointSet(randomSet);
+				}
+
+				this->points = randomSet;
+			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
-		this->window->SetSize(1500, 1500);
+		this->window->SetSize(1200, 1200);
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
@@ -247,5 +267,9 @@ namespace Lab2 {
 
 		// point set ok
 		return 0;
+	}
+
+	std::vector<glm::vec2> randomPointSet(int numPoints) {
+		return {};
 	}
 }
