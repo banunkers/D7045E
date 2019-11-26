@@ -50,10 +50,19 @@ namespace Lab2 {
 				this->window->Close();
 			} else if (key == 73 && action == GLFW_PRESS) { // key 'I' = input
 				auto inputPointSet = readPointsFromFile();
-				auto pointSetValid = validatePointSet(inputPointSet);
+				auto pointSetError = validatePointSet(inputPointSet);
 
-				if (!pointSetValid) {
+				if (pointSetError) {
+					if (pointSetError == 1) {
+						std::cout << "Invalid input: Point set contains atleast one duplicate point\n";
+					} else if (pointSetError == 2) {
+						std::cout << "Invalid input: The convex hull of the point set does not contain the origin\n";
+					} else if (pointSetError == 3) {
+						std::cout << "Invalid input: ";
+					}
 					this->window->Close();
+				} else {
+					this->points = inputPointSet;
 				}
 			} 
 		});
@@ -179,16 +188,64 @@ namespace Lab2 {
 		return points;
 	}
 
-	bool validatePointSet(std::vector<glm::vec2> pointSet) {
-		// Check for duplicate points
-		for (int point = 0; point < pointSet.size(); point++) {
-			for (int i = point + 1; i < pointSet.size(); i++) {
-				if (pointSet[point] == pointSet[i]) {
-					std::cout << "Invalid input: Point set contains a duplicate point with coordinates (" + std::to_string(pointSet[point].x)
-					+ ", " + std::to_string(pointSet[point].y) + ")\n";
-					return false;
+	int validatePointSet(std::vector<glm::vec2> pointSet) {
+		float maxY;
+		float minY;
+		float maxX;
+		float minX;
+
+		// Check for duplicate points and extract min and max coordinates
+		for (int i = 0; i < pointSet.size(); i++) {
+			auto point = pointSet[i];
+
+			if (point.x > maxX) {
+				maxX = point.x;
+			} else if (point.x < minX) {
+				minX = point.x;
+			}
+
+			if (point.y > maxY) {
+				maxY = point.y;
+			} else if (point.y < minY) {
+				minY = point.y;
+			}
+
+			for (int j = i + 1; j < pointSet.size(); j++) {
+				if (point == pointSet[j]) {
+					return 1;
 				}
 			}
 		}
+
+		// Check if origin is inside the convex hull of the point set
+		if (!(maxY > 0 && minY < 0 && maxX > 0 && minX < 0)) {
+			return 2;
+		}
+		
+		/*
+			Fråga Håkan: Behövs inte ifall man kollar convex hull?
+		*/
+		// Check if all points lie on the same line
+		// bool sameLine = true;
+		// for (int i = 0; i < pointSet.size(); i++) {
+		// 	auto p0 = pointSet[i];
+		// 	auto p1 = pointSet[i+1];
+		// 	auto p2 = pointSet[i+2];
+
+		// 	auto p0p1Slope = (p1.x - p0.x) / (p1.y - p0.y);
+		// 	auto p1p2Slope = (p2.x - p1.x) / (p2.y - p1.x);
+
+		// 	if (p0p1Slope != p1p2Slope) {
+		// 		sameLine = false;
+		// 		break;
+		// 	}
+		// }
+
+		// if (sameLine) {
+		// 	return 3;
+		// }
+
+		// point set ok
+		return 0;
 	}
 }
