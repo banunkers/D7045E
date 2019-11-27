@@ -61,7 +61,8 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					this->points = triangleSoup(inputPointSet);
+					this->points = inputPointSet;
+					this->convexHull = triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -72,16 +73,21 @@ namespace Lab2 {
 			} else if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
 				std::cout << this->numInput + "\n";
 				int numPoints = std::stoi(numInput);
-				
-				// Generate a ok random point set
-				auto randomSet = randomPointSet(numPoints);
-				auto pointSetError = validatePointSet(randomSet);
-				while (pointSetError) {
-					randomSet = randomPointSet(numPoints);
-					pointSetError = validatePointSet(randomSet);
-				}
 
-				this->points = triangleSoup(randomSet);
+				if (numPoints < 3) {
+					std::cout << "Invalid input: n is not >= 3\n";
+				} else {
+					// Generate a ok random point set
+					auto randomSet = randomPointSet(numPoints);
+					auto pointSetError = validatePointSet(randomSet);
+					while (pointSetError) {
+						randomSet = randomPointSet(numPoints);
+						pointSetError = validatePointSet(randomSet);
+					}
+
+					this->points = randomSet;
+					this->convexHull = triangleSoup(randomSet);
+				}
 			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
@@ -161,13 +167,16 @@ namespace Lab2 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 			
-			// Set data to koch snowflake vertices
+			// Draw point set
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec2), &points[0], GL_STATIC_DRAW);
-
-			// Draw points
 			glDrawArrays(GL_POINTS, point_attrib_index, points.size());
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			// Draw convex hull
+			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
+			glBufferData(GL_ARRAY_BUFFER, convexHull.size() * sizeof(glm::vec2), &convexHull[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_LINE_LOOP, point_attrib_index, convexHull.size());
 
 			this->window->SwapBuffers();
 		}
@@ -268,6 +277,7 @@ namespace Lab2 {
 	}
 
 	std::vector<glm::vec2> randomPointSet(int numPoints) {
+		std::srand(std::time(NULL)); // new random seed
 		std::vector<glm::vec2> set = {};
 		for (int i = 0; i < numPoints; i++) {
 			auto signOfX = (rand() % 2 == 1) ? -1.0f : 1.0f;
@@ -281,17 +291,15 @@ namespace Lab2 {
 
 	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet) {
 		std::vector<glm::vec2> cHull = convexHull(pointSet);
-		for (auto point: cHull) {
-			std::cout << "(" << point.x << ", " << point.y << ")" << "\n";
-		}
-
+		
 		return cHull;
 	}
 
 	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet) {
-		auto sortedSet = pointSet;
+		if (pointSet.size() <= 3) return pointSet;
 
 		// Sort the point set by x-coordinate
+		auto sortedSet = pointSet;
 		std::sort(sortedSet.begin(), sortedSet.end(), [](const glm::vec2 &p0, const glm::vec2 &p1) {
 			if (p0.x == p1.x) {
 				return p0.y < p1.y;
@@ -300,15 +308,40 @@ namespace Lab2 {
 		});
 
 		// Calculate upper hull
-		
+		std::vector<glm::vec2> upper = {};
+		for (int i = 0; i < sortedSet.size(); i++) {
+			auto considered = sortedSet[i];
+			// while the hull contains at least two points and the considered point lies to the left of the line through last two points
+			// of the hull, pop from the hull
+			while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], considered)) {
+				upper.pop_back();
+			}
+			upper.push_back(considered);
+		}
 
-		return sortedSet;
+		// Calculate lower hull
+		std::vector<glm::vec2> lower = {};
+		for (int i = sortedSet.size() - 1; i  >= 0; i--) {
+			auto considered = sortedSet[i];
+			
+			while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], considered)) {
+				lower.pop_back();
+			}
+			lower.push_back(considered);
+		}
+
+		// Remove last element in each hull to not get duplicate points
+		upper.pop_back();
+		lower.pop_back();
+
+		upper.insert(upper.end(), lower.begin(), lower.end());
+		return upper;
 	}
 
 	/**
-	 * Calculates if a point is left of a line through points a and b
-	 * @param a a point on the line
-	 * @param b a point on the 
+	 * Calculates if a point is left of a line through two points
+	 * @param a point on the line
+	 * @param b point on the line 
 	 * @param point the point
 	 **/
 	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point) {

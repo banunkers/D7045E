@@ -21,6 +21,8 @@ namespace Lab2 {
 			std::vector<glm::vec2> points;
 			Display::Window* window;
 			std::string numInput;
+
+			std::vector<glm::vec2> convexHull;
 	};
 
 	std::vector<glm::vec2> readPointsFromFile();
@@ -28,6 +30,8 @@ namespace Lab2 {
 	std::vector<glm::vec2> randomPointSet(int numPoints);
 	
 	int validatePointSet(std::vector<glm::vec2> pointSet);
+
+	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point);
 
 	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet);
 
