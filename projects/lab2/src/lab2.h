@@ -28,4 +28,9 @@ namespace Lab2 {
 	std::vector<glm::vec2> randomPointSet(int numPoints);
 	
 	int validatePointSet(std::vector<glm::vec2> pointSet);
+
+	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet);
+
+	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet);
+
 }

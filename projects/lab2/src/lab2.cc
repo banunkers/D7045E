@@ -1,8 +1,6 @@
 #include "config.h"
 #include "lab2.h"
 #include "SDL2/SDL.h"
-#include "imgui.h"
-#include "imgui_impl_glfw_gl3.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -14,6 +12,8 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <stdlib.h>
+#include <algorithm>
 
 const GLchar* vs =
 "#version 310 es\n"
@@ -57,13 +57,11 @@ namespace Lab2 {
 					if (pointSetError == 1) {
 						std::cout << "Invalid input: Point set contains atleast one duplicate point\n";
 					} else if (pointSetError == 2) {
-						std::cout << "Invalid input: The convex hull of the point set does not contain the origin\n";
-					} else if (pointSetError == 3) {
-						std::cout << "Invalid input: ";
+						std::cout << "Invalid input: The convex hull of the point set does not contain the origin OR all the points lie on the same line\n";
 					}
 					this->window->Close();
 				} else {
-					this->points = inputPointSet;
+					this->points = triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -83,7 +81,7 @@ namespace Lab2 {
 					pointSetError = validatePointSet(randomSet);
 				}
 
-				this->points = randomSet;
+				this->points = triangleSoup(randomSet);
 			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
@@ -270,6 +268,50 @@ namespace Lab2 {
 	}
 
 	std::vector<glm::vec2> randomPointSet(int numPoints) {
-		return {};
+		std::vector<glm::vec2> set = {};
+		for (int i = 0; i < numPoints; i++) {
+			auto signOfX = (rand() % 2 == 1) ? -1.0f : 1.0f;
+			auto signOfY = (rand() % 2 == 1) ? -1.0f : 1.0f;	
+			auto x = (rand() % 100) / 100.0f * signOfX;
+			auto y = (rand() % 100) / 100.0f * signOfY;		
+			set.push_back(glm::vec2(x, y));
+		}
+		return set;
+	}
+
+	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet) {
+		std::vector<glm::vec2> cHull = convexHull(pointSet);
+		for (auto point: cHull) {
+			std::cout << "(" << point.x << ", " << point.y << ")" << "\n";
+		}
+
+		return cHull;
+	}
+
+	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet) {
+		auto sortedSet = pointSet;
+
+		// Sort the point set by x-coordinate
+		std::sort(sortedSet.begin(), sortedSet.end(), [](const glm::vec2 &p0, const glm::vec2 &p1) {
+			if (p0.x == p1.x) {
+				return p0.y < p1.y;
+			}
+			return p0.x < p1.x;
+		});
+
+		// Calculate upper hull
+		
+
+		return sortedSet;
+	}
+
+	/**
+	 * Calculates if a point is left of a line through points a and b
+	 * @param a a point on the line
+	 * @param b a point on the 
+	 * @param point the point
+	 **/
+	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point) {
+		return ((b.x - a.x) * (point.y - a.y)) > ((b.y - a.y) * (point.x - a.x));
 	}
 }
