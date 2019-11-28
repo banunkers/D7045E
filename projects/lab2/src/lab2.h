@@ -33,6 +33,8 @@ namespace Lab2 {
 
 	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point);
 
+	void sortPointSet(std::vector<glm::vec2> &pointSet);
+
 	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet);
 
 	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet);

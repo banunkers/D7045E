@@ -290,9 +290,18 @@ namespace Lab2 {
 	}
 
 	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet) {
-		std::vector<glm::vec2> cHull = convexHull(pointSet);
+		auto cHull = convexHull(pointSet);
 		
 		return cHull;
+	}
+
+	void sortPointSet(std::vector<glm::vec2> &pointSet) {
+		std::sort(pointSet.begin(), pointSet.end(), [](const glm::vec2 &p0, const glm::vec2 &p1) {
+			if (p0.x == p1.x) {
+				return p0.y < p1.y;
+			}
+			return p0.x < p1.x;
+		});
 	}
 
 	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet) {
@@ -300,19 +309,14 @@ namespace Lab2 {
 
 		// Sort the point set by x-coordinate
 		auto sortedSet = pointSet;
-		std::sort(sortedSet.begin(), sortedSet.end(), [](const glm::vec2 &p0, const glm::vec2 &p1) {
-			if (p0.x == p1.x) {
-				return p0.y < p1.y;
-			}
-			return p0.x < p1.x;
-		});
+		sortPointSet(sortedSet);
 
 		// Calculate upper hull
-		std::vector<glm::vec2> upper = {};
+		auto upper = std::vector<glm::vec2>();
 		for (int i = 0; i < sortedSet.size(); i++) {
 			auto considered = sortedSet[i];
 			// while the hull contains at least two points and the considered point lies to the left of the line through last two points
-			// of the hull, pop from the hull
+			// of the hull, pop from the hull to repair it
 			while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], considered)) {
 				upper.pop_back();
 			}
@@ -320,19 +324,21 @@ namespace Lab2 {
 		}
 
 		// Calculate lower hull
-		std::vector<glm::vec2> lower = {};
+		auto lower = std::vector<glm::vec2>();
 		for (int i = sortedSet.size() - 1; i  >= 0; i--) {
-			auto considered = sortedSet[i];
-			
-			while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], considered)) {
+			while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], sortedSet[i])) {
 				lower.pop_back();
 			}
-			lower.push_back(considered);
+			lower.push_back(sortedSet[i]);
 		}
 
 		// Remove last element in each hull to not get duplicate points
 		upper.pop_back();
 		lower.pop_back();
+
+		for (auto point: upper) {
+			printf("(x: %f, y: %f)\n", point.x, point.y);
+		}
 
 		upper.insert(upper.end(), lower.begin(), lower.end());
 		return upper;
