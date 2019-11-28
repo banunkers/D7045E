@@ -39,6 +39,9 @@ const GLuint point_offset = 0 * sizeof(glm::vec2);
 
 using namespace Display;
 namespace Lab2 {
+	std::vector<glm::vec2> points;
+	std::vector<glm::vec2> cHullPoints;
+
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
 
@@ -61,8 +64,8 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					this->points = inputPointSet;
-					this->convexHull = triangleSoup(inputPointSet);
+					points = inputPointSet;
+					triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -85,8 +88,8 @@ namespace Lab2 {
 						pointSetError = validatePointSet(randomSet);
 					}
 
-					this->points = randomSet;
-					this->convexHull = triangleSoup(randomSet);
+					points = randomSet;
+					triangleSoup(randomSet);
 				}
 			}
 		});
@@ -175,8 +178,8 @@ namespace Lab2 {
 
 			// Draw convex hull
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, convexHull.size() * sizeof(glm::vec2), &convexHull[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, point_attrib_index, convexHull.size());
+			glBufferData(GL_ARRAY_BUFFER, cHullPoints.size() * sizeof(glm::vec2), &cHullPoints[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_LINE_LOOP, point_attrib_index, cHullPoints.size());
 
 			this->window->SwapBuffers();
 		}
@@ -185,7 +188,7 @@ namespace Lab2 {
 	PointSet readPointsFromFile() {
 		std::ifstream inFile;
 		std::string line;
-		PointSet points = {};
+		PointSet inputPoints = {};
 
 		inFile.open("input.txt");
 		if (!inFile) {
@@ -207,15 +210,15 @@ namespace Lab2 {
 				float x = std::stof(line.substr(0, whiteSpace));
 				float y = std::stof(line.substr(whiteSpace + 1, line.size()));
 				Point point = {x, y};
-				points.push_back(point);
+				inputPoints.push_back(point);
 			}
 		}
 
 		inFile.close();
-		return points;
+		return inputPoints;
 	}
 
-	int validatePointSet(PointSet pointSet) {
+	int validatePointSet(PointSet &pointSet) {
 		float maxY;
 		float minY;
 		float maxX;
@@ -289,8 +292,9 @@ namespace Lab2 {
 		return set;
 	}
 
-	PointSet triangleSoup(PointSet pointSet) {
+	PointSet triangleSoup(PointSet &pointSet) {
 		auto cHull = convexHull(pointSet);
+		cHullPoints = cHull; // For drawing chull
 		
 		// pick point c inside the convex hull to construct the inital triangle fan from
 		auto c = pickPoint(pointSet, cHull);
@@ -298,7 +302,7 @@ namespace Lab2 {
 		return cHull;
 	}
 
-	PointSet convexHull(PointSet set) {
+	PointSet convexHull(PointSet &set) {
 		if (set.size() <= 3) return set;
 
 		// Sort the point set by x-coordinate
@@ -340,7 +344,9 @@ namespace Lab2 {
 	 * @param cHull the points of the point set who creates the convex hull
 	 **/
 	Point pickPoint(PointSet &set, PointSet &cHull) {
-		
+		for (const auto &point : set) {
+
+		}
 	}
 
 	/**
@@ -362,7 +368,7 @@ namespace Lab2 {
 	 * @param b point on the line 
 	 * @param point the point
 	 **/
-	bool leftOf(Point a, Point b, Point point) {
+	bool leftOf(Point &a, Point &b, Point &point) {
 		return ((b.x - a.x) * (point.y - a.y)) > ((b.y - a.y) * (point.x - a.x));
 	}
 }
