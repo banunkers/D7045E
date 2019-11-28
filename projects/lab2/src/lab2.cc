@@ -182,10 +182,10 @@ namespace Lab2 {
 		}
 	}
 
-	std::vector<glm::vec2> readPointsFromFile() {
+	PointSet readPointsFromFile() {
 		std::ifstream inFile;
 		std::string line;
-		std::vector<glm::vec2> points = {};
+		PointSet points = {};
 
 		inFile.open("input.txt");
 		if (!inFile) {
@@ -206,7 +206,7 @@ namespace Lab2 {
 				auto whiteSpace = line.find(' ');
 				float x = std::stof(line.substr(0, whiteSpace));
 				float y = std::stof(line.substr(whiteSpace + 1, line.size()));
-				glm::vec2 point = {x, y};
+				Point point = {x, y};
 				points.push_back(point);
 			}
 		}
@@ -215,7 +215,7 @@ namespace Lab2 {
 		return points;
 	}
 
-	int validatePointSet(std::vector<glm::vec2> pointSet) {
+	int validatePointSet(PointSet pointSet) {
 		float maxY;
 		float minY;
 		float maxX;
@@ -276,43 +276,37 @@ namespace Lab2 {
 		return 0;
 	}
 
-	std::vector<glm::vec2> randomPointSet(int numPoints) {
+	PointSet randomPointSet(int numPoints) {
 		std::srand(std::time(NULL)); // new random seed
-		std::vector<glm::vec2> set = {};
+		auto set = PointSet();
 		for (int i = 0; i < numPoints; i++) {
 			auto signOfX = (rand() % 2 == 1) ? -1.0f : 1.0f;
 			auto signOfY = (rand() % 2 == 1) ? -1.0f : 1.0f;	
 			auto x = (rand() % 100) / 100.0f * signOfX;
 			auto y = (rand() % 100) / 100.0f * signOfY;		
-			set.push_back(glm::vec2(x, y));
+			set.push_back(Point(x, y));
 		}
 		return set;
 	}
 
-	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet) {
+	PointSet triangleSoup(PointSet pointSet) {
 		auto cHull = convexHull(pointSet);
 		
+		// pick point c inside the convex hull to construct the inital triangle fan from
+		auto c = pickPoint(pointSet, cHull);
+
 		return cHull;
 	}
 
-	void sortPointSet(std::vector<glm::vec2> &pointSet) {
-		std::sort(pointSet.begin(), pointSet.end(), [](const glm::vec2 &p0, const glm::vec2 &p1) {
-			if (p0.x == p1.x) {
-				return p0.y < p1.y;
-			}
-			return p0.x < p1.x;
-		});
-	}
-
-	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet) {
-		if (pointSet.size() <= 3) return pointSet;
+	PointSet convexHull(PointSet set) {
+		if (set.size() <= 3) return set;
 
 		// Sort the point set by x-coordinate
-		auto sortedSet = pointSet;
+		auto sortedSet = set;
 		sortPointSet(sortedSet);
 
 		// Calculate upper hull
-		auto upper = std::vector<glm::vec2>();
+		auto upper = PointSet();
 		for (int i = 0; i < sortedSet.size(); i++) {
 			auto considered = sortedSet[i];
 			// while the hull contains at least two points and the considered point lies to the left of the line through last two points
@@ -324,7 +318,7 @@ namespace Lab2 {
 		}
 
 		// Calculate lower hull
-		auto lower = std::vector<glm::vec2>();
+		auto lower = PointSet();
 		for (int i = sortedSet.size() - 1; i  >= 0; i--) {
 			while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], sortedSet[i])) {
 				lower.pop_back();
@@ -336,12 +330,30 @@ namespace Lab2 {
 		upper.pop_back();
 		lower.pop_back();
 
-		for (auto point: upper) {
-			printf("(x: %f, y: %f)\n", point.x, point.y);
-		}
-
 		upper.insert(upper.end(), lower.begin(), lower.end());
 		return upper;
+	}
+
+	/**
+	 * Picks a point which is not in the convex hull and the closest to the origin
+	 * @param set the point set
+	 * @param cHull the points of the point set who creates the convex hull
+	 **/
+	Point pickPoint(PointSet &set, PointSet &cHull) {
+		
+	}
+
+	/**
+	 * Sorts a point set by the x-coordinate (if tie by the y-coordinate)
+	 * @param pointSet a reference to the point set to sort 	
+	 **/
+	void sortPointSet(PointSet &set) {
+		std::sort(set.begin(), set.end(), [](const Point &p0, const Point &p1) {
+			if (p0.x == p1.x) {
+				return p0.y < p1.y;
+			}
+			return p0.x < p1.x;
+		});
 	}
 
 	/**
@@ -350,7 +362,7 @@ namespace Lab2 {
 	 * @param b point on the line 
 	 * @param point the point
 	 **/
-	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point) {
+	bool leftOf(Point a, Point b, Point point) {
 		return ((b.x - a.x) * (point.y - a.y)) > ((b.y - a.y) * (point.x - a.x));
 	}
 }

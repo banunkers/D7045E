@@ -25,18 +25,23 @@ namespace Lab2 {
 			std::vector<glm::vec2> convexHull;
 	};
 
-	std::vector<glm::vec2> readPointsFromFile();
+	typedef std::vector<glm::vec2> PointSet;
+	typedef glm::vec2 Point;
 
-	std::vector<glm::vec2> randomPointSet(int numPoints);
+	PointSet readPointsFromFile();
+
+	PointSet randomPointSet(int numPoints);
 	
-	int validatePointSet(std::vector<glm::vec2> pointSet);
+	int validatePointSet(PointSet set);
 
-	bool leftOf(glm::vec2 a, glm::vec2 b, glm::vec2 point);
+	bool leftOf(Point a, Point b, Point point);
 
-	void sortPointSet(std::vector<glm::vec2> &pointSet);
+	void sortPointSet(PointSet &set);
 
-	std::vector<glm::vec2> triangleSoup(std::vector<glm::vec2> pointSet);
+	Point pickPoint(PointSet &set, PointSet &cHull);
 
-	std::vector<glm::vec2> convexHull(std::vector<glm::vec2> pointSet);
+	PointSet triangleSoup(PointSet set);
+
+	PointSet convexHull(PointSet set);
 
 }
