@@ -27,8 +27,9 @@ namespace Lab2 {
 	typedef std::vector<glm::vec2> PointSet;
 	typedef glm::vec2 Point;
 
-	extern std::vector<glm::vec2> points;
-	extern std::vector<glm::vec2> cHullPoints;
+	extern PointSet points;
+	extern PointSet cHullPoints;
+	extern Point cPoint;
 
 	PointSet readPointsFromFile();
 	PointSet randomPointSet(int numPoints);

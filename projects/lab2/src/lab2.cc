@@ -48,9 +48,9 @@ const GLuint point_offset = 0 * sizeof(glm::vec2);
 
 using namespace Display;
 namespace Lab2 {
-	std::vector<glm::vec2> points;
-	std::vector<glm::vec2> cHullPoints;
-	glm::vec2 cPoint;
+	PointSet points;
+	PointSet cHullPoints;
+	Point cPoint = Point(100, 100);
 
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
@@ -104,7 +104,7 @@ namespace Lab2 {
 			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
-		this->window->SetSize(1200, 1200);
+		this->window->SetSize(800, 800);
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
@@ -180,7 +180,7 @@ namespace Lab2 {
 			glEnableVertexAttribArray(point_attrib_index);
 			glVertexAttribPointer(point_attrib_index, 2, GL_FLOAT, GL_FALSE, point_record, (GLvoid*)point_offset);
 			
-			glPointSize(25);
+			glPointSize(10);
 			return true;
 		}
 		return false;
@@ -211,11 +211,15 @@ namespace Lab2 {
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			// Draw c point
-			glUseProgram(this->cPointProgram);
-			glBindBuffer(GL_BUFFER, this->buf);
-			glBufferData(GL_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
-			glDrawArrays(GL_POINT, point_attrib_index, 1);
-
+			cPoint = Point(0,0);
+			if (cPoint != Point(100,100)) {
+				glUseProgram(this->cPointProgram);
+				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
+				glDrawArrays(GL_POINTS, point_attrib_index, 1);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				// cPoint = Point(100, 100);
+			}
 			this->window->SwapBuffers();
 		}
 	}
@@ -254,10 +258,7 @@ namespace Lab2 {
 	}
 
 	int validatePointSet(PointSet &pointSet) {
-		float maxY;
-		float minY;
-		float maxX;
-		float minX;
+		float maxY, minY, maxX, minX;
 
 		// Check for duplicate points and extract min and max coordinates
 		for (int i = 0; i < pointSet.size(); i++) {
@@ -286,29 +287,6 @@ namespace Lab2 {
 		if (!(maxY > 0 && minY < 0 && maxX > 0 && minX < 0)) {
 			return 2;
 		}
-		
-		/*
-			Fråga Håkan: Behövs inte ifall man kollar convex hull?
-		*/
-		// Check if all points lie on the same line
-		// bool sameLine = true;
-		// for (int i = 0; i < pointSet.size(); i++) {
-		// 	auto p0 = pointSet[i];
-		// 	auto p1 = pointSet[i+1];
-		// 	auto p2 = pointSet[i+2];
-
-		// 	auto p0p1Slope = (p1.x - p0.x) / (p1.y - p0.y);
-		// 	auto p1p2Slope = (p2.x - p1.x) / (p2.y - p1.x);
-
-		// 	if (p0p1Slope != p1p2Slope) {
-		// 		sameLine = false;
-		// 		break;
-		// 	}
-		// }
-
-		// if (sameLine) {
-		// 	return 3;
-		// }
 
 		// point set ok
 		return 0;
@@ -331,13 +309,25 @@ namespace Lab2 {
 		auto cHull = convexHull(pointSet);
 		cHullPoints = cHull; // For drawing chull
 		
+		if (pointSet.size() <= 3) {
+			return cHull;
+		}
+
 		// pick point c inside the convex hull to construct the inital triangle fan from
 		auto c = pickPoint(pointSet, cHull);
 		cPoint = c;	// For drawing point c with different color than other points
 		
+		
+
 		return cHull;
 	}
 
+	/**
+	 * Calculates the convex hull of a point set using Andrew's algorithm,
+	 * the first point of the convex hull will also be the last in the resulting point set
+	 * @param set a point set
+	 * @returns a point set containing the points on the convex hull
+	 **/
 	PointSet convexHull(PointSet &set) {
 		if (set.size() <= 3) return set;
 
@@ -348,13 +338,12 @@ namespace Lab2 {
 		// Calculate upper hull
 		auto upper = PointSet();
 		for (int i = 0; i < sortedSet.size(); i++) {
-			auto considered = sortedSet[i];
 			// while the hull contains at least two points and the considered point lies to the left of the line through last two points
 			// of the hull, pop from the hull to repair it
-			while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], considered)) {
+			while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], sortedSet[i])) {
 				upper.pop_back();
 			}
-			upper.push_back(considered);
+			upper.push_back(sortedSet[i]);
 		}
 
 		// Calculate lower hull
@@ -368,41 +357,64 @@ namespace Lab2 {
 
 		// Remove last element in each hull to not get duplicate points
 		upper.pop_back();
-		lower.pop_back();
 
 		upper.insert(upper.end(), lower.begin(), lower.end());
+		for (const auto &point: upper) {
+			printf("(%f, %f)\n", point.x, point.y);
+		}
 		return upper;
 	}
 
 	/**
-	 * Picks a point which is not in the convex hull and the closest to the origin
+	 * Picks a point inside of the convex hull and closest to the origin, if no points 
+	 * exists inside the convex hull the point (on the convex hull) closest to the origin will be picked.
 	 * @param set the point set
-	 * @param cHull the points of the point set who creates the convex hull
+	 * @param cHull the convex hull of the point set
 	 **/
 	Point pickPoint(PointSet &set, PointSet &cHull) {
 		Point closest;
-		float closestDist;
-		for (const auto &point : set) {
-			// Consider a point if its closer to the origin than an earler point
-			// and if it's not on the convex hull
-			if (glm::distance(point, Point(0,0)) < closestDist) {
-				if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
+		float closestDist = 2;
+		Point origin = Point(0, 0);
+
+		// Create a point set of points inside the convex hull
+		auto insideCHull = PointSet();
+		for (const auto &point: set) {
+			if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
+				insideCHull.push_back(point);
+			}
+		}
+
+		if (insideCHull.size() > 0) {
+			for (const auto &point: insideCHull) {
+				auto dist = glm::distance(origin, point);
+				if (dist < closestDist) {
 					closest = point;
+					closestDist = dist;
+				}
+			}
+		} else {
+			for (const auto &point: set) {
+				auto dist = glm::distance(origin, point);
+				if (dist < closestDist) {
+					closest = point;
+					closestDist = dist;
 				}
 			}
 		}
+		
+		return closest;
 	}
 
 	/**
-	 * Sorts a point set by the x-coordinate (if tie by the y-coordinate)
-	 * @param pointSet a reference to the point set to sort 	
+	 * Sorts a point set by the x-coordinate (starting with largest) and if tie by the y-coordinate)
+	 * @param pointSet the point set
 	 **/
 	void sortPointSet(PointSet &set) {
 		std::sort(set.begin(), set.end(), [](const Point &p0, const Point &p1) {
 			if (p0.x == p1.x) {
-				return p0.y < p1.y;
+				return p0.y > p1.y;
 			}
-			return p0.x < p1.x;
+			return p0.x > p1.x;
 		});
 	}
 
