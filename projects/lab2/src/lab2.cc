@@ -33,6 +33,15 @@ const GLchar* ps =
 "	Color = vec4(0, 0, 0, 1);\n"
 "}\n";
 
+const GLchar* psPointC =
+"#version 310 es\n"
+"precision mediump float;\n"
+"out vec4 Color;\n"
+"void main()\n"
+"{\n"
+"	Color = vec4(1, 0, 0, 1);\n"
+"}\n";
+
 const GLuint point_attrib_index = 0;
 const GLuint point_record = 1 * sizeof(glm::vec2);
 const GLuint point_offset = 0 * sizeof(glm::vec2);
@@ -41,6 +50,7 @@ using namespace Display;
 namespace Lab2 {
 	std::vector<glm::vec2> points;
 	std::vector<glm::vec2> cHullPoints;
+	glm::vec2 cPoint;
 
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
@@ -116,11 +126,16 @@ namespace Lab2 {
 				delete[] buf;
 			}
 
-			// setup pixel shader
+			// setup pixel shaders
 			this->pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
 			length = (GLint)std::strlen(ps);
 			glShaderSource(this->pixelShader, 1, &ps, &length);
 			glCompileShader(this->pixelShader);
+
+			this->cPointPixelShader = glCreateShader(GL_FRAGMENT_SHADER);
+			length = (GLint)std::strlen(psPointC);
+			glShaderSource(this->cPointPixelShader, 1, &psPointC, &length);
+			glCompileShader(this->cPointPixelShader);			
 
 			// get error log
 			shaderLogSize;
@@ -141,6 +156,19 @@ namespace Lab2 {
 			if (shaderLogSize > 0) {
 				GLchar* buf = new GLchar[shaderLogSize];
 				glGetProgramInfoLog(this->program, shaderLogSize, NULL, buf);
+				printf("[PROGRAM LINK ERROR]: %s", buf);
+				delete[] buf;
+			}
+
+			// second program for coloring c point
+			this->cPointProgram = glCreateProgram();
+			glAttachShader(this->cPointProgram, this->vertexShader);
+			glAttachShader(this->cPointProgram, this->cPointPixelShader);
+			glLinkProgram(this->cPointProgram);
+			glGetProgramiv(this->cPointProgram, GL_INFO_LOG_LENGTH, &shaderLogSize);
+			if (shaderLogSize > 0) {
+				GLchar* buf = new GLchar[shaderLogSize];
+				glGetProgramInfoLog(this->cPointProgram, shaderLogSize, NULL, buf);
 				printf("[PROGRAM LINK ERROR]: %s", buf);
 				delete[] buf;
 			}
@@ -170,16 +198,23 @@ namespace Lab2 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 			
+			glUseProgram(this->program);
+			// Draw convex hull
+			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
+			glBufferData(GL_ARRAY_BUFFER, cHullPoints.size() * sizeof(glm::vec2), &cHullPoints[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_LINE_LOOP, point_attrib_index, cHullPoints.size());
+
 			// Draw point set
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec2), &points[0], GL_STATIC_DRAW);
 			glDrawArrays(GL_POINTS, point_attrib_index, points.size());
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-			// Draw convex hull
-			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, cHullPoints.size() * sizeof(glm::vec2), &cHullPoints[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, point_attrib_index, cHullPoints.size());
+			// Draw c point
+			glUseProgram(this->cPointProgram);
+			glBindBuffer(GL_BUFFER, this->buf);
+			glBufferData(GL_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
+			glDrawArrays(GL_POINT, point_attrib_index, 1);
 
 			this->window->SwapBuffers();
 		}
@@ -298,7 +333,8 @@ namespace Lab2 {
 		
 		// pick point c inside the convex hull to construct the inital triangle fan from
 		auto c = pickPoint(pointSet, cHull);
-
+		cPoint = c;	// For drawing point c with different color than other points
+		
 		return cHull;
 	}
 
@@ -344,8 +380,16 @@ namespace Lab2 {
 	 * @param cHull the points of the point set who creates the convex hull
 	 **/
 	Point pickPoint(PointSet &set, PointSet &cHull) {
+		Point closest;
+		float closestDist;
 		for (const auto &point : set) {
-
+			// Consider a point if its closer to the origin than an earler point
+			// and if it's not on the convex hull
+			if (glm::distance(point, Point(0,0)) < closestDist) {
+				if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
+					closest = point;
+				}
+			}
 		}
 	}
 

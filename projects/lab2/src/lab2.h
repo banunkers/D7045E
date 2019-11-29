@@ -15,8 +15,10 @@ namespace Lab2 {
 			void Run();
 		private:
 			GLuint program;
+			GLuint cPointProgram;
 			GLuint vertexShader;
 			GLuint pixelShader;
+			GLuint cPointPixelShader;
 			GLuint buf;
 			Display::Window* window;
 			std::string numInput;
