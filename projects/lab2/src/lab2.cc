@@ -208,18 +208,19 @@ namespace Lab2 {
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec2), &points[0], GL_STATIC_DRAW);
 			glDrawArrays(GL_POINTS, point_attrib_index, points.size());
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			// Draw c point
-			cPoint = Point(0,0);
+			// cPoint = Point(0,0);
 			if (cPoint != Point(100,100)) {
 				glUseProgram(this->cPointProgram);
 				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
 				glDrawArrays(GL_POINTS, point_attrib_index, 1);
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-				// cPoint = Point(100, 100);
 			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 			this->window->SwapBuffers();
 		}
 	}
@@ -359,9 +360,9 @@ namespace Lab2 {
 		upper.pop_back();
 
 		upper.insert(upper.end(), lower.begin(), lower.end());
-		for (const auto &point: upper) {
-			printf("(%f, %f)\n", point.x, point.y);
-		}
+		// for (const auto &point: upper) {
+		// 	printf("(%f, %f)\n", point.x, point.y);
+		// }
 		return upper;
 	}
 
