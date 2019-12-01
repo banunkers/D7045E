@@ -48,9 +48,12 @@ const GLuint point_offset = 0 * sizeof(glm::vec2);
 
 using namespace Display;
 namespace Lab2 {
+	// Display configs
+	bool displayC = true;
+
 	PointSet points;
 	PointSet cHullPoints;
-	Point cPoint = Point(100, 100);
+	Point cPoint;
 
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
@@ -204,15 +207,14 @@ namespace Lab2 {
 			glBufferData(GL_ARRAY_BUFFER, cHullPoints.size() * sizeof(glm::vec2), &cHullPoints[0], GL_STATIC_DRAW);
 			glDrawArrays(GL_LINE_LOOP, point_attrib_index, cHullPoints.size());
 
-			// Draw point set
+			// Draw points
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec2), &points[0], GL_STATIC_DRAW);
 			glDrawArrays(GL_POINTS, point_attrib_index, points.size());
-			// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 			// Draw c point
 			// cPoint = Point(0,0);
-			if (cPoint != Point(100,100)) {
+			if (displayC) {
 				glUseProgram(this->cPointProgram);
 				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
@@ -317,8 +319,14 @@ namespace Lab2 {
 		// pick point c inside the convex hull to construct the inital triangle fan from
 		auto c = pickPoint(pointSet, cHull);
 		cPoint = c;	// For drawing point c with different color than other points
-		
-		
+
+		// printf("c = (%f, %f)\n", c.x, c.y);
+
+
+		// auto triangleFan = cHull;
+		// triangleFan.insert(triangleFan.begin(), c);
+		// printf("triangleFan[0] = (%f, %f)\n", triangleFan[0].x, triangleFan[0].y);
+
 
 		return cHull;
 	}

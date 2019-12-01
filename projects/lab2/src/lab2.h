@@ -30,6 +30,7 @@ namespace Lab2 {
 	extern PointSet points;
 	extern PointSet cHullPoints;
 	extern Point cPoint;
+	extern PointSet triangleFan;
 
 	PointSet readPointsFromFile();
 	PointSet randomPointSet(int numPoints);
