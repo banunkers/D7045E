@@ -51,9 +51,10 @@ namespace Lab2 {
 	// Display configs
 	bool displayC = true;
 
-	PointSet points;
-	PointSet cHullPoints;
-	Point cPoint;
+	PointSet drawPoints;
+	PointSet drawCHull;
+	Point drawC;
+	PointSet drawTriangulation;
 
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
@@ -77,7 +78,7 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					points = inputPointSet;
+					drawPoints = inputPointSet;
 					triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
@@ -101,7 +102,7 @@ namespace Lab2 {
 						pointSetError = validatePointSet(randomSet);
 					}
 
-					points = randomSet;
+					drawPoints = randomSet;
 					triangleSoup(randomSet);
 				}
 			}
@@ -204,20 +205,24 @@ namespace Lab2 {
 			glUseProgram(this->program);
 			// Draw convex hull
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, cHullPoints.size() * sizeof(glm::vec2), &cHullPoints[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, point_attrib_index, cHullPoints.size());
+			glBufferData(GL_ARRAY_BUFFER, drawCHull.size() * sizeof(glm::vec2), &drawCHull[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_LINE_LOOP, point_attrib_index, drawCHull.size());
 
 			// Draw points
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec2), &points[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_POINTS, point_attrib_index, points.size());
+			glBufferData(GL_ARRAY_BUFFER, drawPoints.size() * sizeof(glm::vec2), &drawPoints[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_POINTS, point_attrib_index, drawPoints.size());
+
+			// Draw triangulation
+			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
+			glBufferData(GL_ARRAY_BUFFER, drawTriangulation.size() * sizeof(glm::vec2), &drawTriangulation[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_TRIANGLES, point_attrib_index, drawTriangulation.size());
 
 			// Draw c point
-			// cPoint = Point(0,0);
 			if (displayC) {
 				glUseProgram(this->cPointProgram);
 				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &cPoint, GL_STATIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &drawC, GL_STATIC_DRAW);
 				glDrawArrays(GL_POINTS, point_attrib_index, 1);
 			}
 
@@ -310,7 +315,7 @@ namespace Lab2 {
 
 	PointSet triangleSoup(PointSet &pointSet) {
 		auto cHull = convexHull(pointSet);
-		cHullPoints = cHull; // For drawing chull
+		drawCHull = cHull; // For drawing chull
 		
 		if (pointSet.size() <= 3) {
 			return cHull;
@@ -318,17 +323,31 @@ namespace Lab2 {
 
 		// pick point c inside the convex hull to construct the inital triangle fan from
 		auto c = pickPoint(pointSet, cHull);
-		cPoint = c;	// For drawing point c with different color than other points
+		drawC = c;	// For drawing point c with different color than other points
 
-		// printf("c = (%f, %f)\n", c.x, c.y);
-
-
-		// auto triangleFan = cHull;
-		// triangleFan.insert(triangleFan.begin(), c);
-		// printf("triangleFan[0] = (%f, %f)\n", triangleFan[0].x, triangleFan[0].y);
-
-
+		auto tree = buildTree(c, cHull, nullptr);
+		drawTriangulation = extractTriangles(tree);
+		
 		return cHull;
+	}
+
+	PointSet extractTriangles(Node *node) {
+		if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
+			return leaf->triangle->get();
+		} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
+			auto lTriangles = extractTriangles(bn->lst);
+			auto rTriangles = extractTriangles(bn->rst);
+			lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
+			return lTriangles;
+		} else {	// ternary
+			TNode *tn = dynamic_cast<TNode*>(node); 
+			auto lTriangles = extractTriangles(tn->lst);
+			auto mTriangles = extractTriangles(tn->mst);
+			auto rTriangles = extractTriangles(tn->rst);
+			lTriangles.insert(lTriangles.end(), mTriangles.begin(), mTriangles.end());
+			lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
+			return lTriangles;
+		}
 	}
 
 	/**
@@ -372,6 +391,21 @@ namespace Lab2 {
 		// 	printf("(%f, %f)\n", point.x, point.y);
 		// }
 		return upper;
+	}
+
+	Node* buildTree(Point &c, PointSet cHull, Node *parent) {
+		if (cHull.size() <= 2) {
+			return new Leaf(new Triangle(c, cHull[0], cHull[1]), parent);
+		}
+
+		auto medianIndex = cHull.size() / 2;
+		BNode *bn = new BNode(c, cHull[0], cHull[medianIndex], cHull[cHull.size() - 1], parent);
+
+		// compute sub tress
+		bn->lst = buildTree(c, PointSet(cHull.begin() + medianIndex, cHull.end()), bn);
+		bn->rst = buildTree(c, PointSet(cHull.begin(), cHull.begin() + medianIndex), bn);
+		
+		return bn;
 	}
 
 	/**
