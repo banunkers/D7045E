@@ -27,7 +27,7 @@ PointSet readPointsFromFile() {
 			auto whiteSpace = line.find(' ');
 			float x = std::stof(line.substr(0, whiteSpace));
 			float y = std::stof(line.substr(whiteSpace + 1, line.size()));
-			Point point = {x, y};
+			auto point = Point(x, y);
 			inputPoints.push_back(point);
 		}
 	}

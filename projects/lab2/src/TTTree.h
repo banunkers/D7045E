@@ -44,30 +44,32 @@ struct Leaf : Node {
 };
 
 struct BNode : Node {
-	Edge first, mid, last;
+	Point c, ci, cm, cj;
 	Node *lst, *rst;
 
-	BNode(Point c, Point p0, Point p1, Point p2, Node *parent) :
-		first(Edge(p0, c)),
-		mid(Edge(p1, c)),
-		last(Edge(p2, c)),
+	BNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
+		c(c),
+		ci(ci),
+		cm(cm),
+		cj(cj),
 		lst(nullptr),
 		rst(nullptr),
 		Node(parent) {}
 };
 
 struct TNode : Node {
-	Edge first, mid, last;
+	Point c, ci, cm, cj;
 	Node *lst, *mst, *rst;
 
-	TNode(Point c, Point p0, Point p1, Point p2) :
-		first(Edge(p0, c)),
-		mid(Edge(p1, c)),
-		last(Edge(p2, c)),
+	TNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
+		c(c),
+		ci(ci),
+		cm(cm),
+		cj(cj),
 		lst(nullptr),
 		mst(nullptr),
 		rst(nullptr),
-		Node(nullptr) {}
+		Node(parent) {}
 };
 
 #endif

@@ -10,18 +10,10 @@
  * @param set the point set
  * @param cHull the convex hull of the point set
  **/
-Point pickPoint(PointSet &set, PointSet &cHull) {
+Point pickPoint(PointSet &set, PointSet &insideCHull) {
 	Point closest;
 	float closestDist = 2;
 	Point origin = Point(0, 0);
-
-	// Create a point set of points inside the convex hull
-	auto insideCHull = PointSet();
-	for (const auto &point: set) {
-		if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
-			insideCHull.push_back(point);
-		}
-	}
 
 	if (insideCHull.size() > 0) {
 		for (const auto &point: insideCHull) {
@@ -109,6 +101,8 @@ PointSet convexHull(PointSet &set) {
 
 /**
  * Extracts triangles contained in the leafs of a 2-3 search tree
+ * @param node the root of the 2-3 search tree
+ * @returns a vector containing the vertices create the triangles
  **/
 PointSet extractTriangles(Node *node) {
 	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
@@ -142,13 +136,8 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 	BNode *bn = new BNode(c, cHull[0], cHull[medianIndex], cHull[cHull.size() - 1], parent);
 
 	// compute sub tress
-	auto leftPoints = PointSet(cHull.begin() + medianIndex, cHull.end());
-	printf("---------- LeftPoints ----------\n");
-	for (const auto &point: leftPoints) {
-		printf("(%f, %f)\n", point.x, point.y);
-	}
-	bn->lst = buildTree(c, PointSet(cHull.begin() + medianIndex, cHull.end()), bn);
-	bn->rst = buildTree(c, PointSet(cHull.begin(), cHull.begin() + medianIndex + 1), bn);
+	bn->lst = buildTree(c, PointSet(cHull.begin(), cHull.begin() + medianIndex + 1), bn);
+	bn->rst = buildTree(c, PointSet(cHull.begin() + medianIndex, cHull.end()), bn);
 	
 	return bn;
 }
@@ -159,8 +148,30 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
  * @param point the point to locate
  * @returns the leaf in which the point is located
  **/
-Node* searchTree(Node &tree, Point &point) {
-	
+Node* searchTree(Node *tree, Point &point) {
+	if (Leaf *leaf = dynamic_cast<Leaf*>(tree)) {
+		return leaf;
+	} else if (BNode *bn = dynamic_cast<BNode*>(tree)) {
+		printf("SEARCHING IN NODE\n");
+		printf("point	: (%f, %f)\n", point.x, point.y);
+		printf("c	: (%f, %f)\n", bn->c.x, bn->c.y);
+		printf("ci	: (%f, %f)\n", bn->ci.x, bn->ci.y);
+		printf("cm	: (%f, %f)\n", bn->cm.x, bn->cm.y);
+		printf("cj	: (%f, %f)\n", bn->cj.x, bn->cj.y);
+
+		// if (bn->mid.leftOf(bn->first.p0)) {	// case 1 "ci left of cm->c"
+		// 	if (!bn->first.leftOf(point) && bn->mid.leftOf(point)) {
+		// 		return searchTree(bn->lst, point);
+		// 	}
+		// 	// return searchTree(bn->rst, point);
+		// }
+
+		// // case 2 "ci right of cm->c"
+		// if (!bn->mid.leftOf(point) || bn->first.leftOf(point)) {
+		// 	return searchTree(bn->lst, point);
+		// }
+		// return searchTree(bn->rst, point);
+	}
 }
 
 void insertPoint(Point &point) {
@@ -174,10 +185,29 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 		return std::make_tuple(cHull, Point(), PointSet());
 	}
 
-	// pick point c inside the convex hull to construct the inital triangle fan from
-	auto c = pickPoint(set, cHull);
+	// Create a point set of points inside the convex hull
+	auto insideCHull = PointSet();
+	for (const auto &point: set) {
+		if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
+			insideCHull.push_back(point);
+		}
+	}
 
+	// pick point c inside the convex hull to construct the inital triangle fan from
+	auto c = pickPoint(set, insideCHull);
 	auto tree = buildTree(c, cHull, nullptr);
+	
+	if (insideCHull.size() > 0) {
+		insideCHull.erase(std::find(insideCHull.begin(), insideCHull.end(), c));
+	}
+
+	for (auto &point: insideCHull) {
+		auto location = searchTree(tree, point);
+		// Leaf *leaf = dynamic_cast<Leaf*>(location);
+		printf("Found node in triangle\n");
+		// printf("(%f, %f) \n (%f, %f) \n (%f, %f) \n", leaf->triangle->p0.x, leaf->triangle->p0.y, leaf->triangle->p1.x, leaf->triangle->p1.y, leaf->triangle->p2.x, leaf->triangle->p2.y);
+	}
+
 	auto triangulation = extractTriangles(tree);
 	
 	return std::make_tuple(cHull, c, triangulation);
