@@ -1,10 +1,8 @@
 #include <glm/vec2.hpp>
+#include "types.h"
 
 #ifndef TTTREE_H
 #define TTTREE_H
-
-typedef glm::vec2 Point;
-typedef std::vector<glm::vec2> PointSet;
 
 struct Edge {
 	Point p0;
@@ -50,9 +48,9 @@ struct BNode : Node {
 	Node *lst, *rst;
 
 	BNode(Point c, Point p0, Point p1, Point p2, Node *parent) :
-		first(Edge(c, p0)),
-		mid(Edge(c, p1)),
-		last(Edge(c, p2)),
+		first(Edge(p0, c)),
+		mid(Edge(p1, c)),
+		last(Edge(p2, c)),
 		lst(nullptr),
 		rst(nullptr),
 		Node(parent) {}
@@ -63,9 +61,9 @@ struct TNode : Node {
 	Node *lst, *mst, *rst;
 
 	TNode(Point c, Point p0, Point p1, Point p2) :
-		first(Edge(c, p0)),
-		mid(Edge(c, p1)),
-		last(Edge(c, p2)),
+		first(Edge(p0, c)),
+		mid(Edge(p1, c)),
+		last(Edge(p2, c)),
 		lst(nullptr),
 		mst(nullptr),
 		rst(nullptr),

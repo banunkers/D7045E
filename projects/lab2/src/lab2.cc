@@ -1,6 +1,8 @@
 #include "config.h"
 #include "lab2.h"
 #include "SDL2/SDL.h"
+#include "input.h"
+#include "triangle_soup.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -9,11 +11,8 @@
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
-#include <fstream>
-#include <iostream>
-#include <iomanip>
 #include <stdlib.h>
-#include <algorithm>
+#include <iostream>
 
 const GLchar* vs =
 "#version 310 es\n"
@@ -78,8 +77,8 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					drawPoints = inputPointSet;
-					triangleSoup(inputPointSet);
+					drawPoints = inputPointSet;	// draw points
+					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -94,21 +93,14 @@ namespace Lab2 {
 				if (numPoints < 3) {
 					std::cout << "Invalid input: n is not >= 3\n";
 				} else {
-					// Generate a ok random point set
 					auto randomSet = randomPointSet(numPoints);
-					auto pointSetError = validatePointSet(randomSet);
-					while (pointSetError) {
-						randomSet = randomPointSet(numPoints);
-						pointSetError = validatePointSet(randomSet);
-					}
-
-					drawPoints = randomSet;
-					triangleSoup(randomSet);
+					drawPoints = randomSet;	// draw points
+					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(randomSet);
 				}
 			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
-		this->window->SetSize(800, 800);
+		this->window->SetSize(1200, 1200);
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
@@ -216,7 +208,7 @@ namespace Lab2 {
 			// Draw triangulation
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, drawTriangulation.size() * sizeof(glm::vec2), &drawTriangulation[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_TRIANGLES, point_attrib_index, drawTriangulation.size());
+			glDrawArrays(GL_LINES, point_attrib_index, drawTriangulation.size());
 
 			// Draw c point
 			if (displayC) {
@@ -230,244 +222,5 @@ namespace Lab2 {
 
 			this->window->SwapBuffers();
 		}
-	}
-
-	PointSet readPointsFromFile() {
-		std::ifstream inFile;
-		std::string line;
-		PointSet inputPoints = {};
-
-		inFile.open("input.txt");
-		if (!inFile) {
-			std::cout << "Unable to open input file 'input.txt'\n";
-		}
-		
-		bool firstLine = true;
-		while (std::getline(inFile, line)) {
-			if (firstLine) {
-				if (std::stoi(line) < 3) {
-					std::cout << "Invalid input point set: First line is not the number of points or the number of points is < 3" << "\n";
-					inFile.close();
-					exit(0);
-				}
-				firstLine = false;
-			} else {
-				// Find white space seperated x and y cordinate (float) of a point on the input line
-				auto whiteSpace = line.find(' ');
-				float x = std::stof(line.substr(0, whiteSpace));
-				float y = std::stof(line.substr(whiteSpace + 1, line.size()));
-				Point point = {x, y};
-				inputPoints.push_back(point);
-			}
-		}
-
-		inFile.close();
-		return inputPoints;
-	}
-
-	int validatePointSet(PointSet &pointSet) {
-		float maxY, minY, maxX, minX;
-
-		// Check for duplicate points and extract min and max coordinates
-		for (int i = 0; i < pointSet.size(); i++) {
-			auto point = pointSet[i];
-
-			if (point.x > maxX) {
-				maxX = point.x;
-			} else if (point.x < minX) {
-				minX = point.x;
-			}
-
-			if (point.y > maxY) {
-				maxY = point.y;
-			} else if (point.y < minY) {
-				minY = point.y;
-			}
-
-			for (int j = i + 1; j < pointSet.size(); j++) {
-				if (point == pointSet[j]) {
-					return 1;
-				}
-			}
-		}
-
-		// Check if origin is inside the convex hull of the point set
-		if (!(maxY > 0 && minY < 0 && maxX > 0 && minX < 0)) {
-			return 2;
-		}
-
-		// point set ok
-		return 0;
-	}
-
-	PointSet randomPointSet(int numPoints) {
-		std::srand(std::time(NULL)); // new random seed
-		auto set = PointSet();
-		for (int i = 0; i < numPoints; i++) {
-			auto signOfX = (rand() % 2 == 1) ? -1.0f : 1.0f;
-			auto signOfY = (rand() % 2 == 1) ? -1.0f : 1.0f;	
-			auto x = (rand() % 100) / 100.0f * signOfX;
-			auto y = (rand() % 100) / 100.0f * signOfY;		
-			set.push_back(Point(x, y));
-		}
-		return set;
-	}
-
-	PointSet triangleSoup(PointSet &pointSet) {
-		auto cHull = convexHull(pointSet);
-		drawCHull = cHull; // For drawing chull
-		
-		if (pointSet.size() <= 3) {
-			return cHull;
-		}
-
-		// pick point c inside the convex hull to construct the inital triangle fan from
-		auto c = pickPoint(pointSet, cHull);
-		drawC = c;	// For drawing point c with different color than other points
-
-		auto tree = buildTree(c, cHull, nullptr);
-		drawTriangulation = extractTriangles(tree);
-		
-		return cHull;
-	}
-
-	PointSet extractTriangles(Node *node) {
-		if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
-			return leaf->triangle->get();
-		} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
-			auto lTriangles = extractTriangles(bn->lst);
-			auto rTriangles = extractTriangles(bn->rst);
-			lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
-			return lTriangles;
-		} else {	// ternary
-			TNode *tn = dynamic_cast<TNode*>(node); 
-			auto lTriangles = extractTriangles(tn->lst);
-			auto mTriangles = extractTriangles(tn->mst);
-			auto rTriangles = extractTriangles(tn->rst);
-			lTriangles.insert(lTriangles.end(), mTriangles.begin(), mTriangles.end());
-			lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
-			return lTriangles;
-		}
-	}
-
-	/**
-	 * Calculates the convex hull of a point set using Andrew's algorithm,
-	 * the first point of the convex hull will also be the last in the resulting point set
-	 * @param set a point set
-	 * @returns a point set containing the points on the convex hull
-	 **/
-	PointSet convexHull(PointSet &set) {
-		if (set.size() <= 3) return set;
-
-		// Sort the point set by x-coordinate
-		auto sortedSet = set;
-		sortPointSet(sortedSet);
-
-		// Calculate upper hull
-		auto upper = PointSet();
-		for (int i = 0; i < sortedSet.size(); i++) {
-			// while the hull contains at least two points and the considered point lies to the left of the line through last two points
-			// of the hull, pop from the hull to repair it
-			while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], sortedSet[i])) {
-				upper.pop_back();
-			}
-			upper.push_back(sortedSet[i]);
-		}
-
-		// Calculate lower hull
-		auto lower = PointSet();
-		for (int i = sortedSet.size() - 1; i  >= 0; i--) {
-			while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], sortedSet[i])) {
-				lower.pop_back();
-			}
-			lower.push_back(sortedSet[i]);
-		}
-
-		// Remove last element in each hull to not get duplicate points
-		upper.pop_back();
-
-		upper.insert(upper.end(), lower.begin(), lower.end());
-		// for (const auto &point: upper) {
-		// 	printf("(%f, %f)\n", point.x, point.y);
-		// }
-		return upper;
-	}
-
-	Node* buildTree(Point &c, PointSet cHull, Node *parent) {
-		if (cHull.size() <= 2) {
-			return new Leaf(new Triangle(c, cHull[0], cHull[1]), parent);
-		}
-
-		auto medianIndex = cHull.size() / 2;
-		BNode *bn = new BNode(c, cHull[0], cHull[medianIndex], cHull[cHull.size() - 1], parent);
-
-		// compute sub tress
-		bn->lst = buildTree(c, PointSet(cHull.begin() + medianIndex, cHull.end()), bn);
-		bn->rst = buildTree(c, PointSet(cHull.begin(), cHull.begin() + medianIndex), bn);
-		
-		return bn;
-	}
-
-	/**
-	 * Picks a point inside of the convex hull and closest to the origin, if no points 
-	 * exists inside the convex hull the point (on the convex hull) closest to the origin will be picked.
-	 * @param set the point set
-	 * @param cHull the convex hull of the point set
-	 **/
-	Point pickPoint(PointSet &set, PointSet &cHull) {
-		Point closest;
-		float closestDist = 2;
-		Point origin = Point(0, 0);
-
-		// Create a point set of points inside the convex hull
-		auto insideCHull = PointSet();
-		for (const auto &point: set) {
-			if (std::find(cHull.begin(), cHull.end(), point) == cHull.end()) {
-				insideCHull.push_back(point);
-			}
-		}
-
-		if (insideCHull.size() > 0) {
-			for (const auto &point: insideCHull) {
-				auto dist = glm::distance(origin, point);
-				if (dist < closestDist) {
-					closest = point;
-					closestDist = dist;
-				}
-			}
-		} else {
-			for (const auto &point: set) {
-				auto dist = glm::distance(origin, point);
-				if (dist < closestDist) {
-					closest = point;
-					closestDist = dist;
-				}
-			}
-		}
-		
-		return closest;
-	}
-
-	/**
-	 * Sorts a point set by the x-coordinate (starting with largest) and if tie by the y-coordinate)
-	 * @param pointSet the point set
-	 **/
-	void sortPointSet(PointSet &set) {
-		std::sort(set.begin(), set.end(), [](const Point &p0, const Point &p1) {
-			if (p0.x == p1.x) {
-				return p0.y > p1.y;
-			}
-			return p0.x > p1.x;
-		});
-	}
-
-	/**
-	 * Calculates if a point is left of a line through two points
-	 * @param a point on the line
-	 * @param b point on the line 
-	 * @param point the point
-	 **/
-	bool leftOf(Point &a, Point &b, Point &point) {
-		return ((b.x - a.x) * (point.y - a.y)) > ((b.y - a.y) * (point.x - a.x));
 	}
 }
