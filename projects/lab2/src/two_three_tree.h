@@ -3,8 +3,8 @@
 #include "types.h"
 #include "point_line.h"
 
-#ifndef TTTREE_H
-#define TTTREE_H
+#ifndef TWO_THREE_TREE_H
+#define TWO_THREE_TREE_H
 
 struct Triangle {
 	Point p0, p1, p2;
@@ -20,18 +20,18 @@ struct Triangle {
 struct Node {
 	Node *parent;
 
-	virtual ~Node() {};
-	virtual Point getC();
-	virtual Point getCm();
-	virtual Point getCi();
-	virtual Point getCj();
+	virtual ~Node(){}
+	virtual Point getC(){}
+	virtual Point getCm(){}
+	virtual Point getCi(){}
+	virtual Point getCj(){}
 
-	virtual Node* getLst();
-	virtual Node* getMst();
-	virtual Node* getRst();
-	virtual void setLst(Node* tree);
-	virtual void setMst(Node* tree);
-	virtual void setRst(Node* tree);
+	virtual Node* getLst(){}
+	virtual Node* getMst(){}
+	virtual Node* getRst(){}
+	virtual void setLst(Node* tree){}
+	virtual void setMst(Node* tree){}
+	virtual void setRst(Node* tree){}
 
 	virtual void insertPoint(Point &point) = 0;
 
@@ -44,13 +44,7 @@ struct BNode : Node {
 	Node *lst, *rst;
 
 	BNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
-		c(c),
-		ci(ci),
-		cm(cm),
-		cj(cj),
-		lst(nullptr),
-		rst(nullptr),
-		Node(parent) {}
+		c(c), ci(ci), cm(cm), cj(cj), lst(nullptr), rst(nullptr), Node(parent) {}
 	
 	virtual Point getC() {return c;}
 	virtual Point getCm() {return cm;}
@@ -77,18 +71,27 @@ struct BNode : Node {
 		Node* foundInNode;
 		if (leftOf(cm, c, ci)) {	// case 1 "ci left of cm->c"
 			if (!leftOf(ci, c, point) && leftOf(cm, c, point)) {
-				printf("right case1\n");
+				printf("left case1\n");
+				lst->insertPoint(point);
+				// printf("right case1\n");
+				// rst->insertPoint(point);
+
+			} else {
+				// printf("in left case1\n");
+				// lst->insertPoint(point);
+				printf("in right case1\n");
 				rst->insertPoint(point);
+
 			}
-			printf("in left case1\n");
-			lst->insertPoint(point);
+			
 		} else { 	// case 2 "ci right of cm->c"
 			if (!leftOf(ci, c, point) || leftOf(cm, c, point)) {
 				printf("right case2\n");
 				rst->insertPoint(point);
+			} else {
+				printf("left case2\n");
+				lst->insertPoint(point);
 			}
-			printf("left case2\n");
-			lst->insertPoint(point);
 		}
 	}
 };
@@ -98,14 +101,7 @@ struct TNode : Node {
 	Node *lst, *mst, *rst;
 
 	TNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
-		c(c),
-		ci(ci),
-		cm(cm),
-		cj(cj),
-		lst(nullptr),
-		mst(nullptr),
-		rst(nullptr),
-		Node(parent) {}
+		c(c), ci(ci), cm(cm), cj(cj), lst(nullptr), mst(nullptr), rst(nullptr), Node(parent) {}
 	
 	virtual Point getC() {return c;}
 	virtual Point getCm() {return cm;}
@@ -138,11 +134,17 @@ struct Leaf : Node {
 		auto c = parent->getC();
 		auto cm = parent->getCm();
 		auto cj = parent->getCj();
+		auto ci = parent->getCi();
 
 		TNode *newNode = new TNode(point, c, cm, cj, parent);
 		newNode->lst = new Leaf(new Triangle(c, cm, point), newNode);
 		newNode->mst = new Leaf(new Triangle(point, cm, cj), newNode);
 		newNode->rst = new Leaf(new Triangle(c, point, cj), newNode);
+
+		// newNode->lst = new Leaf(new Triangle(c, cm, point), newNode);
+		// newNode->mst = new Leaf(new Triangle(point, cm, cj), newNode);
+		// newNode->rst = new Leaf(new Triangle(c, point, cj), newNode);
+
 
 		// Determine the sub-tree of parent leaf is located
 		if (parent->getLst() == this) { 

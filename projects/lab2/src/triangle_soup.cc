@@ -38,7 +38,7 @@ Point pickPoint(PointSet &set, PointSet &insideCHull) {
 }
 
 /**
- * Sorts a point set by the x-coordinate (starting with largest) and if tie by the y-coordinate)
+ * Sorts a point set by the x-coordinate (from largest to smallest) and if tie by the y-coordinate
  * @param pointSet the point set
  **/
 void sortPointSet(PointSet &set) {
@@ -63,9 +63,18 @@ PointSet convexHull(PointSet &set) {
 	auto sortedSet = set;
 	sortPointSet(sortedSet);
 
+	// Calculate lower hull
+	auto lower = PointSet();
+	for (int i = 0; i < sortedSet.size(); i++) {
+		while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], sortedSet[i])) {
+			lower.pop_back();
+		}
+		lower.push_back(sortedSet[i]);
+	}
+	
 	// Calculate upper hull
 	auto upper = PointSet();
-	for (int i = 0; i < sortedSet.size(); i++) {
+	for (int i = sortedSet.size() - 1; i >= 0; i--) {
 		// while the hull contains at least two points and the considered point lies to the left of the line through last two points
 		// of the hull, pop from the hull to repair it
 		while (upper.size() > 1 && leftOf(upper[upper.size() - 2], upper[upper.size() - 1], sortedSet[i])) {
@@ -74,20 +83,10 @@ PointSet convexHull(PointSet &set) {
 		upper.push_back(sortedSet[i]);
 	}
 
-	// Calculate lower hull
-	auto lower = PointSet();
-	for (int i = sortedSet.size() - 1; i  >= 0; i--) {
-		while (lower.size() > 1 && leftOf(lower[lower.size() - 2], lower[lower.size() - 1], sortedSet[i])) {
-			lower.pop_back();
-		}
-		lower.push_back(sortedSet[i]);
-	}
-
-	// Remove last element of upper hull do not get duplicate when concat with lower
-	upper.pop_back();
-	upper.insert(upper.end(), lower.begin(), lower.end());
-
-	return upper;
+	// Remove last element of lower hull do not get duplicate when concat with upper
+	lower.pop_back();
+	lower.insert(lower.end(), upper.begin(), upper.end());
+	return lower;
 }
 
 /**
@@ -104,8 +103,7 @@ PointSet extractTriangles(Node *node) {
 		auto rTriangles = extractTriangles(bn->rst);
 		lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
 		return lTriangles;
-	} else {	// ternary
-		TNode *tn = dynamic_cast<TNode*>(node); 
+	} else if (TNode *tn = dynamic_cast<TNode*>(node)){
 		auto lTriangles = extractTriangles(tn->lst);
 		auto mTriangles = extractTriangles(tn->mst);
 		auto rTriangles = extractTriangles(tn->rst);
@@ -113,6 +111,7 @@ PointSet extractTriangles(Node *node) {
 		lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
 		return lTriangles;
 	}
+	return {};
 }
 
 /**
@@ -135,6 +134,7 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 
 std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
+	std::reverse(cHull.begin(), cHull.end()); 	// make CCW
 	
 	if (set.size() <= 3) {
 		return std::make_tuple(cHull, Point(), PointSet());
@@ -150,17 +150,22 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 
 	// pick point c inside the convex hull to construct the inital triangle fan from
 	auto c = pickPoint(set, insideCHull);
-	auto tree = buildTree(c, cHull, nullptr);
-	
 	if (insideCHull.size() > 0) {
 		insideCHull.erase(std::find(insideCHull.begin(), insideCHull.end(), c));
 	}
+
+	printf("CHULL\n");
+	for (int i = 0; i < cHull.size(); i++) {
+		printf("(%f, %f)\n", cHull[i].x, cHull[i].y);
+	}
+
+	auto tree = buildTree(c, cHull, nullptr);
 
 	for (auto &point: insideCHull) {
 		tree->insertPoint(point);
 	}
 
-	auto triangulation = extractTriangles(tree);
+	auto triangleSoup = extractTriangles(tree);
 	
-	return std::make_tuple(cHull, c, triangulation);
+	return std::make_tuple(cHull, c, triangleSoup);
 }
