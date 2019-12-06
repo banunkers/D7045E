@@ -1,4 +1,5 @@
 #include "triangle_soup.h"
+#include "point_line.h"
 #include <iostream>
 #include <glm/glm.hpp>
 #include <algorithm>
@@ -50,16 +51,6 @@ void sortPointSet(PointSet &set) {
 }
 
 /**
- * Calculates if a point is left of a line through two points
- * @param a point on the line
- * @param b point on the line 
- * @param point the point
- **/
-bool leftOf(Point &a, Point &b, Point &point) {
-	return ((b.x - a.x) * (point.y - a.y)) > ((b.y - a.y) * (point.x - a.x));
-}
-
-/**
  * Calculates the convex hull of a point set using Andrew's algorithm,
  * the first point of the convex hull will also be the last in the resulting point set
  * @param set a point set
@@ -106,7 +97,7 @@ PointSet convexHull(PointSet &set) {
  **/
 PointSet extractTriangles(Node *node) {
 	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
-		auto triangle = leaf->triangle->get();
+		auto triangle = leaf->triangle->toVec();
 		return {triangle[0], triangle[1], triangle[0], triangle[2]};
 	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
 		auto lTriangles = extractTriangles(bn->lst);
@@ -142,42 +133,6 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 	return bn;
 }
 
-/**
- * Searches through a 2-3 search tree and locates where in the tree a point lies
- * @param tree the 2-3 search tree
- * @param point the point to locate
- * @returns the leaf in which the point is located
- **/
-Node* searchTree(Node *tree, Point &point) {
-	if (Leaf *leaf = dynamic_cast<Leaf*>(tree)) {
-		return leaf;
-	} else if (BNode *bn = dynamic_cast<BNode*>(tree)) {
-		printf("SEARCHING IN NODE\n");
-		printf("point	: (%f, %f)\n", point.x, point.y);
-		printf("c	: (%f, %f)\n", bn->c.x, bn->c.y);
-		printf("ci	: (%f, %f)\n", bn->ci.x, bn->ci.y);
-		printf("cm	: (%f, %f)\n", bn->cm.x, bn->cm.y);
-		printf("cj	: (%f, %f)\n", bn->cj.x, bn->cj.y);
-
-		// if (bn->mid.leftOf(bn->first.p0)) {	// case 1 "ci left of cm->c"
-		// 	if (!bn->first.leftOf(point) && bn->mid.leftOf(point)) {
-		// 		return searchTree(bn->lst, point);
-		// 	}
-		// 	// return searchTree(bn->rst, point);
-		// }
-
-		// // case 2 "ci right of cm->c"
-		// if (!bn->mid.leftOf(point) || bn->first.leftOf(point)) {
-		// 	return searchTree(bn->lst, point);
-		// }
-		// return searchTree(bn->rst, point);
-	}
-}
-
-void insertPoint(Point &point) {
-
-}
-
 std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
 	
@@ -202,10 +157,7 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 	}
 
 	for (auto &point: insideCHull) {
-		auto location = searchTree(tree, point);
-		// Leaf *leaf = dynamic_cast<Leaf*>(location);
-		printf("Found node in triangle\n");
-		// printf("(%f, %f) \n (%f, %f) \n (%f, %f) \n", leaf->triangle->p0.x, leaf->triangle->p0.y, leaf->triangle->p1.x, leaf->triangle->p1.y, leaf->triangle->p2.x, leaf->triangle->p2.y);
+		tree->insertPoint(point);
 	}
 
 	auto triangulation = extractTriangles(tree);
