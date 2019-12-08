@@ -21,19 +21,7 @@ struct Node {
 	Node *parent;
 
 	virtual ~Node(){}
-	virtual Point getC(){}
-	virtual Point getCm(){}
-	virtual Point getCi(){}
-	virtual Point getCj(){}
-
-	virtual Node* getLst(){}
-	virtual Node* getMst(){}
-	virtual Node* getRst(){}
-	virtual void setLst(Node* tree){}
-	virtual void setMst(Node* tree){}
-	virtual void setRst(Node* tree){}
-
-	virtual void insertPoint(Point &point) = 0;
+	virtual Node* insertPoint(Point &point){}
 
 	Node(Node *parent) :
 		parent(parent) {};
@@ -45,23 +33,12 @@ struct BNode : Node {
 
 	BNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
 		c(c), ci(ci), cm(cm), cj(cj), lst(nullptr), rst(nullptr), Node(parent) {}
-	
-	virtual Point getC() {return c;}
-	virtual Point getCm() {return cm;}
-	virtual Point getCi() {return ci;}
-	virtual Point getCj() {return cj;}
-
-	virtual Node* getLst() {return lst;}
-	virtual Node* getMst() {return nullptr;}
-	virtual Node* getRst() {return rst;}
-	virtual void setLst(Node* tree) {lst = tree;}
-	virtual void setRst(Node* tree) {rst = tree;}
 
 	PointSet toVec() {
 		return {c, ci, cm, cj}; 
 	}
 
-	void insertPoint(Point &point) {
+	Node* insertPoint(Point &point) {
 		printf("SEARCHING IN BINARY NODE\n");
 		printf("point	: (%f, %f)\n", point.x, point.y);
 		printf("c	: (%f, %f)\n", c.x, c.y);
@@ -72,20 +49,21 @@ struct BNode : Node {
 		if (leftOf(cm, c, ci) || onLine(cm, c, ci, false)) {	// case 1 "ci left of cm->c"
 			if (!leftOf(ci, c, point) && leftOf(cm, c, point)) {
 				printf("left case1\n");
-				lst->insertPoint(point);
+				lst = lst->insertPoint(point);
 			} else {
 				printf("in right case1\n");
-				rst->insertPoint(point);
+				rst = rst->insertPoint(point);
 			}
 		} else { 	// case 2 "ci right of cm->c"
 			if (!leftOf(ci, c, point) || leftOf(cm, c, point)) {
 				printf("left case2\n");
-				lst->insertPoint(point);
+				lst = lst->insertPoint(point);
 			} else {
 				printf("right case2\n");
-				rst->insertPoint(point);
+				rst = rst->insertPoint(point);
 			}
 		}
+		return this;
 	}
 };
 
@@ -95,21 +73,26 @@ struct TNode : Node {
 
 	TNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
 		c(c), ci(ci), cm(cm), cj(cj), lst(nullptr), mst(nullptr), rst(nullptr), Node(parent) {}
-	
-	virtual Point getC() {return c;}
-	virtual Point getCm() {return cm;}
-	virtual Point getCi() {return ci;}
-	virtual Point getCj() {return cj;}
 
-	virtual Node* getLst() {return lst;}
-	virtual Node* getMst() {return mst;}
-	virtual Node* getRst() {return rst;}
-	virtual void setLst(Node* tree) {lst = tree;}
-	virtual void setMst(Node* tree) {mst = tree;}
-	virtual void setRst(Node* tree) {rst = tree;}
+	virtual Node* insertPoint(Point &point) {
+		printf("SEARCHING IN TERNARY NODE\n");
+		printf("point	: (%f, %f)\n", point.x, point.y);
+		printf("c	: (%f, %f)\n", c.x, c.y);
+		printf("ci	: (%f, %f)\n", ci.x, ci.y);
+		printf("cm	: (%f, %f)\n", cm.x, cm.y);
+		printf("cj	: (%f, %f)\n", cj.x, cj.y);
 
-	virtual void insertPoint(Point &point) {
-		return;
+		if (leftOf(cm, c, point) && !leftOf(ci, c, point)) {
+			printf("in left\n");
+			lst = lst->insertPoint(point);
+		} else if (!leftOf(cm, c, point) && leftOf(cj, c, point)) {
+			printf("in mid\n");
+			mst = mst->insertPoint(point);
+		} else {
+			printf("in right\n");
+			rst = rst->insertPoint(point);
+		}
+		return this;
 	}
 
 	PointSet toVec() {
@@ -123,7 +106,7 @@ struct Leaf : Node {
 	Leaf(Triangle *triangle, Node *parent) :
 		triangle(triangle), Node(parent) {}
 
-	void insertPoint(Point &point) {
+	Node* insertPoint(Point &point) {
 		TNode *newNode = new TNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
 		newNode->lst = new Leaf(new Triangle(triangle->p0, triangle->p1, point), newNode);
 		newNode->mst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
@@ -133,13 +116,23 @@ struct Leaf : Node {
 		printf("(%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p0.x,triangle->p0.y,triangle->p1.x,triangle->p1.y,triangle->p2.x,triangle->p2.y);
 
 		// Determine the sub-tree of parent leaf is located
-		if (parent->getLst() == this) {
-			parent->setLst(newNode);
-		} else if (parent->getMst() == this) {
-			parent->setMst(newNode);
-		} else {
-			parent->setRst(newNode);
-		}
+		// auto lst = static_cast<void*>(parent->getLst());
+		// auto mst = static_cast<void*>(parent->getMst());
+		// auto lst = dynamic_cast<Leaf*>(parent->getLst());
+		// auto mst = dynamic_cast<Leaf*>(parent->getMst());
+		// auto currLeaf = static_cast<Leaf*>(this);
+		// // Node currNode = *this;
+		// if (currLeaf == lst) {
+		// 	printf("Replacing parent lst\n");
+		// 	parent->setLst(newNode);
+		// } else if (currLeaf == mst) {
+		// 	printf("Replacing parent mst\n");
+		// 	parent->setMst(newNode);
+		// } else {
+		// 	printf("Replacing parent rst\n");
+		// 	parent->setRst(newNode);
+		// }
+		return newNode;
 	}
 };
 
