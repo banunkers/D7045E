@@ -62,35 +62,28 @@ struct BNode : Node {
 	}
 
 	void insertPoint(Point &point) {
-		printf("SEARCHING IN NODE\n");
+		printf("SEARCHING IN BINARY NODE\n");
 		printf("point	: (%f, %f)\n", point.x, point.y);
 		printf("c	: (%f, %f)\n", c.x, c.y);
 		printf("ci	: (%f, %f)\n", ci.x, ci.y);
 		printf("cm	: (%f, %f)\n", cm.x, cm.y);
 		printf("cj	: (%f, %f)\n", cj.x, cj.y);
-		Node* foundInNode;
-		if (leftOf(cm, c, ci)) {	// case 1 "ci left of cm->c"
+
+		if (leftOf(cm, c, ci) || onLine(cm, c, ci, false)) {	// case 1 "ci left of cm->c"
 			if (!leftOf(ci, c, point) && leftOf(cm, c, point)) {
 				printf("left case1\n");
 				lst->insertPoint(point);
-				// printf("right case1\n");
-				// rst->insertPoint(point);
-
 			} else {
-				// printf("in left case1\n");
-				// lst->insertPoint(point);
 				printf("in right case1\n");
 				rst->insertPoint(point);
-
 			}
-			
 		} else { 	// case 2 "ci right of cm->c"
 			if (!leftOf(ci, c, point) || leftOf(cm, c, point)) {
-				printf("right case2\n");
-				rst->insertPoint(point);
-			} else {
 				printf("left case2\n");
 				lst->insertPoint(point);
+			} else {
+				printf("right case2\n");
+				rst->insertPoint(point);
 			}
 		}
 	}
@@ -131,23 +124,16 @@ struct Leaf : Node {
 		triangle(triangle), Node(parent) {}
 
 	void insertPoint(Point &point) {
-		auto c = parent->getC();
-		auto cm = parent->getCm();
-		auto cj = parent->getCj();
-		auto ci = parent->getCi();
+		TNode *newNode = new TNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
+		newNode->lst = new Leaf(new Triangle(triangle->p0, triangle->p1, point), newNode);
+		newNode->mst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+		newNode->rst = new Leaf(new Triangle(triangle->p0, point, triangle->p2), newNode);
 
-		TNode *newNode = new TNode(point, c, cm, cj, parent);
-		newNode->lst = new Leaf(new Triangle(c, cm, point), newNode);
-		newNode->mst = new Leaf(new Triangle(point, cm, cj), newNode);
-		newNode->rst = new Leaf(new Triangle(c, point, cj), newNode);
-
-		// newNode->lst = new Leaf(new Triangle(c, cm, point), newNode);
-		// newNode->mst = new Leaf(new Triangle(point, cm, cj), newNode);
-		// newNode->rst = new Leaf(new Triangle(c, point, cj), newNode);
-
+		printf("FOUND IN LEAF\n");
+		printf("(%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p0.x,triangle->p0.y,triangle->p1.x,triangle->p1.y,triangle->p2.x,triangle->p2.y);
 
 		// Determine the sub-tree of parent leaf is located
-		if (parent->getLst() == this) { 
+		if (parent->getLst() == this) {
 			parent->setLst(newNode);
 		} else if (parent->getMst() == this) {
 			parent->setMst(newNode);

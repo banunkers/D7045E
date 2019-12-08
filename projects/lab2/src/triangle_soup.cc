@@ -154,10 +154,10 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 		insideCHull.erase(std::find(insideCHull.begin(), insideCHull.end(), c));
 	}
 
-	printf("CHULL\n");
-	for (int i = 0; i < cHull.size(); i++) {
-		printf("(%f, %f)\n", cHull[i].x, cHull[i].y);
-	}
+	// printf("CHULL\n");
+	// for (int i = 0; i < cHull.size(); i++) {
+	// 	printf("(%f, %f)\n", cHull[i].x, cHull[i].y);
+	// }
 
 	auto tree = buildTree(c, cHull, nullptr);
 
