@@ -54,17 +54,24 @@ struct BNode : Node {
 
 		if (pointOnLine) {
 			printf("Point on line: (%f, %f)\n", pointOnLine->x, pointOnLine->y);
-			if (*pointOnLine == cm) {
+			if (!this->parent) {	// root
+				printf("parent point on line\n");
 				lst = lst->insertPoint(point);
-				rst = rst->insertPoint(point);
-			} else if (*pointOnLine == ci) {
-				printf("ci point on line\n");
-				lst = lst->insertPoint(point);
-			} else if (*pointOnLine == cj) {
-				printf("cj point on line\n");
 				rst = rst->insertPoint(point);
 			} else {
-				printf("FUCKCK\n");
+				if (*pointOnLine == cm) {
+					printf("cm point on line\n");
+					lst = lst->insertPoint(point);
+					rst = rst->insertPoint(point);
+				} else if (*pointOnLine == ci) {
+					printf("ci point on line\n");
+					lst = lst->insertPoint(point);
+				} else if (*pointOnLine == cj) {
+					printf("cj point on line\n");
+					rst = rst->insertPoint(point);
+				} else {
+					printf("FUCKCK\n");
+				}
 			}
 		} else {
 			if (leftOf(cm, c, ci)) {	// case 1 "ci left of cm->c"
@@ -104,15 +111,39 @@ struct TNode : Node {
 		printf("cm	: (%f, %f)\n", cm.x, cm.y);
 		printf("cj	: (%f, %f)\n", cj.x, cj.y);
 
-		if (leftOf(cm, c, point) && !leftOf(ci, c, point)) {
-			printf("in left\n");
+		Point *pointOnLine = 
+			onLine(ci, c, point) ? &ci
+				: onLine(cm, c, point) ? &cm 
+				: onLine(cj, c, point) ? &cj 
+				: nullptr;
+
+		if (pointOnLine) {
+			// if (*pointOnLine == cm) {
+			// 	printf("cm point on line\n");
+			// 	lst = lst->insertPoint(point);
+			// 	rst = rst->insertPoint(point);
+			// } else if (*pointOnLine == ci) {
+			// 	printf("ci point on line\n");
+			// 	lst = lst->insertPoint(point);
+			// } else if (*pointOnLine == cj) {
+			// 	printf("cj point on line\n");
+			// 	rst = rst->insertPoint(point);
+			// } else {
+			// 	printf("FUuuuuuuuuuuuuuuuCKCKC\n");
+			// }
 			lst = lst->insertPoint(point);
-		} else if (!leftOf(cm, c, point) && leftOf(cj, c, point)) {
-			printf("in mid\n");
-			mst = mst->insertPoint(point);
-		} else {
-			printf("in right\n");
 			rst = rst->insertPoint(point);
+		} else {
+			if (leftOf(cm, c, point) && !leftOf(ci, c, point)) {
+				printf("in left\n");
+				lst = lst->insertPoint(point);
+			} else if (!leftOf(cm, c, point) && leftOf(cj, c, point)) {
+				printf("in mid\n");
+				mst = mst->insertPoint(point);
+			} else {
+				printf("in right\n");
+				rst = rst->insertPoint(point);
+			}
 		}
 		return this;
 	}
@@ -137,23 +168,6 @@ struct Leaf : Node {
 		printf("FOUND IN LEAF\n");
 		printf("(%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p0.x,triangle->p0.y,triangle->p1.x,triangle->p1.y,triangle->p2.x,triangle->p2.y);
 
-		// Determine the sub-tree of parent leaf is located
-		// auto lst = static_cast<void*>(parent->getLst());
-		// auto mst = static_cast<void*>(parent->getMst());
-		// auto lst = dynamic_cast<Leaf*>(parent->getLst());
-		// auto mst = dynamic_cast<Leaf*>(parent->getMst());
-		// auto currLeaf = static_cast<Leaf*>(this);
-		// // Node currNode = *this;
-		// if (currLeaf == lst) {
-		// 	printf("Replacing parent lst\n");
-		// 	parent->setLst(newNode);
-		// } else if (currLeaf == mst) {
-		// 	printf("Replacing parent mst\n");
-		// 	parent->setMst(newNode);
-		// } else {
-		// 	printf("Replacing parent rst\n");
-		// 	parent->setRst(newNode);
-		// }
 		return newNode;
 	}
 };

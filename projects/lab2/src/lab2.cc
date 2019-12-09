@@ -177,6 +177,7 @@ namespace Lab2 {
 			glVertexAttribPointer(point_attrib_index, 2, GL_FLOAT, GL_FALSE, point_record, (GLvoid*)point_offset);
 			
 			glPointSize(10);
+			glLineWidth(2);
 			return true;
 		}
 		return false;
