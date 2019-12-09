@@ -11,6 +11,6 @@
  **/
 bool leftOf(Point &a, Point &b, Point &point);
 
-bool onLine(Point &a, Point &b, Point &point, bool insideLine);
+bool onLine(Point &a, Point &b, Point &point);
 
 #endif

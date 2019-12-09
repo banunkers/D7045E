@@ -46,16 +46,28 @@ struct BNode : Node {
 		printf("cm	: (%f, %f)\n", cm.x, cm.y);
 		printf("cj	: (%f, %f)\n", cj.x, cj.y);
 
-		std::vector<Point> pointOnLine = 
-			onLine(ci, ci, point, true) ? std::vector{ci, c}
-				: onLine(cm, c, point, true) ? std::vector{cm, c} 
-				: onLine(cj, c, point, true) ? std::vector{cj, c} 
-				: std::vector<Point>();
+		Point *pointOnLine = 
+			onLine(ci, c, point) ? &ci
+				: onLine(cm, c, point) ? &cm 
+				: onLine(cj, c, point) ? &cj 
+				: nullptr;
 
-		if (pointOnLine.size() > 0) {
-			
+		if (pointOnLine) {
+			printf("Point on line: (%f, %f)\n", pointOnLine->x, pointOnLine->y);
+			if (*pointOnLine == cm) {
+				lst = lst->insertPoint(point);
+				rst = rst->insertPoint(point);
+			} else if (*pointOnLine == ci) {
+				printf("ci point on line\n");
+				lst = lst->insertPoint(point);
+			} else if (*pointOnLine == cj) {
+				printf("cj point on line\n");
+				rst = rst->insertPoint(point);
+			} else {
+				printf("FUCKCK\n");
+			}
 		} else {
-			if (leftOf(cm, c, ci) || onLine(cm, c, ci, false)) {	// case 1 "ci left of cm->c"
+			if (leftOf(cm, c, ci)) {	// case 1 "ci left of cm->c"
 				if (!leftOf(ci, c, point) && leftOf(cm, c, point)) {
 					printf("left case1\n");
 					lst = lst->insertPoint(point);
