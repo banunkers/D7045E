@@ -118,21 +118,19 @@ struct TNode : Node {
 				: nullptr;
 
 		if (pointOnLine) {
-			// if (*pointOnLine == cm) {
-			// 	printf("cm point on line\n");
-			// 	lst = lst->insertPoint(point);
-			// 	rst = rst->insertPoint(point);
-			// } else if (*pointOnLine == ci) {
-			// 	printf("ci point on line\n");
-			// 	lst = lst->insertPoint(point);
-			// } else if (*pointOnLine == cj) {
-			// 	printf("cj point on line\n");
-			// 	rst = rst->insertPoint(point);
-			// } else {
-			// 	printf("FUuuuuuuuuuuuuuuuCKCKC\n");
-			// }
-			lst = lst->insertPoint(point);
-			rst = rst->insertPoint(point);
+			if (*pointOnLine == cm) {
+				printf("cm->c point on line\n");
+				rst = rst->insertPoint(point);
+				mst = mst->insertPoint(point);
+			} else if (*pointOnLine == ci) {
+				printf("ci->c point on line\n");
+				lst = lst->insertPoint(point);
+				mst = mst->insertPoint(point);
+			} else {
+				printf("cj->c point on line\n");
+				lst = lst->insertPoint(point);
+				rst = rst->insertPoint(point);
+			}
 		} else {
 			if (leftOf(cm, c, point) && !leftOf(ci, c, point)) {
 				printf("in left\n");

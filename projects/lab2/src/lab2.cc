@@ -94,13 +94,19 @@ namespace Lab2 {
 					std::cout << "Invalid input: n is not >= 3\n";
 				} else {
 					auto randomSet = randomPointSet(numPoints);
+					printf("----------------- RANDOM POINT SET GENERATED -----------------\n");
+					for (const auto &point: randomSet) {
+						printf("(%f, %f)\n", point.x, point.y);
+					}
+					printf("--------------------------------------------------------------\n");
+
 					drawPoints = randomSet;	// draw points
 					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(randomSet);
 				}
 			}
 		});
 		this->window->SetTitle(std::string("Lab 2"));
-		this->window->SetSize(1200, 1200);
+		this->window->SetSize(1500, 1500);
 
 		if (this->window->Open()) {
 			// set clear color to pale yellow
