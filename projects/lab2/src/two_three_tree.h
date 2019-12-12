@@ -120,15 +120,15 @@ struct TNode : Node {
 		if (pointOnLine) {
 			if (*pointOnLine == cm) {
 				printf("cm->c point on line\n");
-				rst = rst->insertPoint(point);
+				lst = lst->insertPoint(point);
 				mst = mst->insertPoint(point);
 			} else if (*pointOnLine == ci) {
 				printf("ci->c point on line\n");
 				lst = lst->insertPoint(point);
-				mst = mst->insertPoint(point);
+				rst = rst->insertPoint(point);
 			} else {
 				printf("cj->c point on line\n");
-				lst = lst->insertPoint(point);
+				mst = mst->insertPoint(point);
 				rst = rst->insertPoint(point);
 			}
 		} else {
@@ -158,13 +158,43 @@ struct Leaf : Node {
 		triangle(triangle), Node(parent) {}
 
 	Node* insertPoint(Point &point) {
-		TNode *newNode = new TNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
-		newNode->lst = new Leaf(new Triangle(triangle->p0, triangle->p1, point), newNode);
-		newNode->mst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
-		newNode->rst = new Leaf(new Triangle(triangle->p0, point, triangle->p2), newNode);
-
 		printf("FOUND IN LEAF\n");
 		printf("(%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p0.x,triangle->p0.y,triangle->p1.x,triangle->p1.y,triangle->p2.x,triangle->p2.y);
+		
+		Point* pointOnLine = 
+			onLine(triangle->p0, triangle->p1, point) ? &triangle->p1
+				: onLine(triangle->p1, triangle->p2, point) ? &triangle->p2
+				: onLine(triangle->p2, triangle->p0, point) ? &triangle->p0
+				: nullptr;
+
+		if (pointOnLine) {
+			printf("LEAF POINT ON LINE\n");
+			BNode *newNode = new BNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
+
+			// To determine correct vertices for leafs the line the point lies on needs to be regarded
+			Triangle *t1, *t2;
+			if (*pointOnLine == triangle->p1) { // p0->p1
+				newNode->lst = new Leaf(new Triangle(point, triangle->p2, triangle->p0), newNode);
+				newNode->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+			} else if (*pointOnLine == triangle->p2) {	// p1->p2
+				newNode->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), newNode);
+				newNode->rst = new Leaf(new Triangle(point, triangle->p0, triangle->p2), newNode);
+			} else { // p2->p0
+				newNode->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+				newNode->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), newNode);
+			}
+			printf("NEW LEAFS ARE\n");
+			printf("lst = (%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p2.x, triangle->p2.y, point.x, point.y, triangle->p1.x, triangle->p1.x);
+			printf("rst = (%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle->p2.x, triangle->p2.y, triangle->p0.x, triangle->p0.y, point.x, point.y);
+			// newNode->rst = new Leaf(new Triangle(triangle->p2, point, triangle->p1), newNode);
+			// newNode->lst = new Leaf(new Triangle(triangle->p0, triangle->p2, point), newNode);
+			return newNode;
+		}
+
+		TNode *newNode = new TNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
+		newNode->lst = new Leaf(new Triangle(point, triangle->p0, triangle->p1), newNode);
+		newNode->mst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+		newNode->rst = new Leaf(new Triangle(point, triangle->p2, triangle->p0), newNode);
 
 		return newNode;
 	}
