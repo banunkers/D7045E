@@ -168,25 +168,22 @@ struct Leaf : Node {
 				: nullptr;
 
 		if (pointOnLine) {
-			Triangle *t1, *t2;
-			BNode *bn;
-			// To determine correct vertices for the node and leafs the line the point lies on needs to be regarded
-			if (*pointOnLine == triangle->p1) { // p0->p1
-				bn = new BNode(point, triangle->p1, triangle->p2, triangle->p0, parent);
-				bn->lst = new Leaf(new Triangle(point, triangle->p2, triangle->p0), bn);
-				bn->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), bn);
-			} else if (*pointOnLine == triangle->p2) {	// p1->p2
-				bn = new BNode(point, triangle->p2, triangle->p0, triangle->p1, parent);
-				bn->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), bn);
-				bn->rst = new Leaf(new Triangle(point, triangle->p0, triangle->p2), bn);
-			} else { // p2->p0
-				bn = new BNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
-				bn->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), bn);
-				bn->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), bn);
-			}
-
 			printf("LEAF POINT ON LINE\n");
-			return bn;
+			BNode *newNode = new BNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
+
+			// To determine correct vertices for leafs the line the point lies on needs to be regarded
+			Triangle *t1, *t2;
+			if (*pointOnLine == triangle->p1) { // p0->p1
+				newNode->rst = new Leaf(new Triangle(point, triangle->p2, triangle->p0), newNode);
+				newNode->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+			} else if (*pointOnLine == triangle->p2) {	// p1->p2
+				newNode->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), newNode);
+				newNode->lst = new Leaf(new Triangle(point, triangle->p0, triangle->p2), newNode);
+			} else { // p2->p0
+				newNode->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), newNode);
+				newNode->lst = new Leaf(new Triangle(point, triangle->p1, triangle->p0), newNode);
+			}
+			return newNode;
 		}
 
 		TNode *newNode = new TNode(point, triangle->p0, triangle->p1, triangle->p2, parent);
