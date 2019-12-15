@@ -186,8 +186,6 @@ struct Leaf : Node {
 				bn->rst = new Leaf(new Triangle(point, triangle->p1, triangle->p2), bn);
 				bn->lst = new Leaf(new Triangle(point, triangle->p0, triangle->p1), bn);
 			}
-
-			printf("LEAF POINT ON LINE\n");
 			return bn;
 		}
 
