@@ -97,7 +97,7 @@ PointSet convexHull(PointSet &set) {
 PointSet extractTriangles(Node *node) {
 	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
 		auto triangle = leaf->triangle->toVec();
-		// printf("found (%f, %f) -> (%f, %f) -> (%f, %f)\n", triangle[0].x, triangle[0].y, triangle[1].x, triangle[1].y, triangle[2].x, triangle[2].y);
+		printf("found p0:(%f, %f) -> p1:(%f, %f) -> p2(%f, %f)\n", triangle[0].x, triangle[0].y, triangle[1].x, triangle[1].y, triangle[2].x, triangle[2].y);
 		return {triangle[0], triangle[1], triangle[0], triangle[2], triangle[1], triangle[2]};
 	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
 		auto lTriangles = extractTriangles(bn->lst);
