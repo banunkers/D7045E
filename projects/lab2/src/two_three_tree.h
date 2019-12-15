@@ -34,10 +34,6 @@ struct BNode : Node {
 	BNode(Point c, Point ci, Point cm, Point cj, Node *parent) :
 		c(c), ci(ci), cm(cm), cj(cj), lst(nullptr), rst(nullptr), Node(parent) {}
 
-	PointSet toVec() {
-		return {c, ci, cm, cj}; 
-	}
-
 	Node* insertPoint(Point &point) {
 		printf("SEARCHING IN BINARY NODE\n");
 		printf("point	: (%f, %f)\n", point.x, point.y);
@@ -144,10 +140,6 @@ struct TNode : Node {
 			}
 		}
 		return this;
-	}
-
-	PointSet toVec() {
-		return {c, ci, cm, cj};
 	}
 };
 

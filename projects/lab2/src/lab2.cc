@@ -32,15 +32,6 @@ const GLchar* ps =
 "	Color = vec4(0, 0, 0, 1);\n"
 "}\n";
 
-const GLchar* psPointC =
-"#version 310 es\n"
-"precision mediump float;\n"
-"out vec4 Color;\n"
-"void main()\n"
-"{\n"
-"	Color = vec4(1, 0, 0, 1);\n"
-"}\n";
-
 const GLuint point_attrib_index = 0;
 const GLuint point_record = 1 * sizeof(glm::vec2);
 const GLuint point_offset = 0 * sizeof(glm::vec2);
@@ -50,8 +41,8 @@ namespace Lab2 {
 	// Display configs
 	bool displayC = true;
 
-	PointSet drawPoints;
-	PointSet drawCHull;
+	PointSet vertices;
+	PointSet convexHull;
 	Point drawC;
 	PointSet drawTriangulation;
 
@@ -77,8 +68,8 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					drawPoints = inputPointSet;	// draw points
-					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(inputPointSet);
+					vertices = inputPointSet;	// draw points
+					tie(convexHull, drawTriangulation) = triangleSoup(inputPointSet);
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -100,8 +91,8 @@ namespace Lab2 {
 					}
 					printf("--------------------------------------------------------------\n");
 
-					drawPoints = randomSet;	// draw points
-					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(randomSet);
+					vertices = randomSet;	// draw points
+					tie(convexHull, drawTriangulation) = triangleSoup(randomSet);
 				}
 			}
 		});
@@ -132,12 +123,7 @@ namespace Lab2 {
 			this->pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
 			length = (GLint)std::strlen(ps);
 			glShaderSource(this->pixelShader, 1, &ps, &length);
-			glCompileShader(this->pixelShader);
-
-			this->cPointPixelShader = glCreateShader(GL_FRAGMENT_SHADER);
-			length = (GLint)std::strlen(psPointC);
-			glShaderSource(this->cPointPixelShader, 1, &psPointC, &length);
-			glCompileShader(this->cPointPixelShader);			
+			glCompileShader(this->pixelShader);		
 
 			// get error log
 			shaderLogSize;
@@ -158,19 +144,6 @@ namespace Lab2 {
 			if (shaderLogSize > 0) {
 				GLchar* buf = new GLchar[shaderLogSize];
 				glGetProgramInfoLog(this->program, shaderLogSize, NULL, buf);
-				printf("[PROGRAM LINK ERROR]: %s", buf);
-				delete[] buf;
-			}
-
-			// second program for coloring c point
-			this->cPointProgram = glCreateProgram();
-			glAttachShader(this->cPointProgram, this->vertexShader);
-			glAttachShader(this->cPointProgram, this->cPointPixelShader);
-			glLinkProgram(this->cPointProgram);
-			glGetProgramiv(this->cPointProgram, GL_INFO_LOG_LENGTH, &shaderLogSize);
-			if (shaderLogSize > 0) {
-				GLchar* buf = new GLchar[shaderLogSize];
-				glGetProgramInfoLog(this->cPointProgram, shaderLogSize, NULL, buf);
 				printf("[PROGRAM LINK ERROR]: %s", buf);
 				delete[] buf;
 			}
@@ -204,26 +177,18 @@ namespace Lab2 {
 			glUseProgram(this->program);
 			// Draw convex hull
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, drawCHull.size() * sizeof(glm::vec2), &drawCHull[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, point_attrib_index, drawCHull.size());
+			glBufferData(GL_ARRAY_BUFFER, convexHull.size() * sizeof(glm::vec2), &convexHull[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_LINE_LOOP, point_attrib_index, convexHull.size());
 
 			// Draw points
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, drawPoints.size() * sizeof(glm::vec2), &drawPoints[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_POINTS, point_attrib_index, drawPoints.size());
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec2), &vertices[0], GL_STATIC_DRAW);
+			glDrawArrays(GL_POINTS, point_attrib_index, vertices.size());
 
 			// Draw triangulation
 			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
 			glBufferData(GL_ARRAY_BUFFER, drawTriangulation.size() * sizeof(glm::vec2), &drawTriangulation[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINES, point_attrib_index, drawTriangulation.size());
-
-			// Draw c point
-			if (displayC) {
-				glUseProgram(this->cPointProgram);
-				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &drawC, GL_STATIC_DRAW);
-				glDrawArrays(GL_POINTS, point_attrib_index, 1);
-			}
+			glDrawArrays(GL_TRIANGLES, point_attrib_index, drawTriangulation.size() / 3);
 
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 

@@ -91,14 +91,12 @@ PointSet convexHull(PointSet &set) {
 
 /**
  * Extracts triangles contained in the leafs of a 2-3 search tree
- * @param node the root of the 2-3 search tree
- * @returns a vector containing the vertices create the triangles
+ * @param node a node in the 2-3 search tree
+ * @returns a vector containing the vertices of the triangles
  **/
 PointSet extractTriangles(Node *node) {
 	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
-		auto triangle = leaf->triangle->toVec();
-		printf("found p0:(%f, %f) -> p1:(%f, %f) -> p2(%f, %f)\n", triangle[0].x, triangle[0].y, triangle[1].x, triangle[1].y, triangle[2].x, triangle[2].y);
-		return {triangle[0], triangle[1], triangle[0], triangle[2], triangle[1], triangle[2]};
+		return leaf->triangle->toVec();
 	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
 		auto lTriangles = extractTriangles(bn->lst);
 		auto rTriangles = extractTriangles(bn->rst);
@@ -133,12 +131,12 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 	return bn;
 }
 
-std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
+std::pair<PointSet,PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
 	std::reverse(cHull.begin(), cHull.end()); 	// make CCW
 	
 	if (set.size() <= 3) {
-		return std::make_tuple(cHull, Point(), PointSet());
+		return std::make_pair(cHull, PointSet());
 	}
 
 	// Create a point set of points inside the convex hull
@@ -155,18 +153,16 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 		insideCHull.erase(std::find(insideCHull.begin(), insideCHull.end(), c));
 	}
 
-	// printf("CHULL\n");
-	// for (int i = 0; i < cHull.size(); i++) {
-	// 	printf("(%f, %f)\n", cHull[i].x, cHull[i].y);
-	// }
-
+	// build initial 2-3 search three containing the convex hull and point c
 	auto tree = buildTree(c, cHull, nullptr);
 
+	// Insert every point inside the convex hull in the 2-3 search tree
 	for (auto &point: insideCHull) {
 		tree->insertPoint(point);
 	}
 
+	// get the vertices of all the triangles in the triangle soup
 	auto triangleSoup = extractTriangles(tree);
 	
-	return std::make_tuple(cHull, c, triangleSoup);
+	return std::make_pair(cHull, triangleSoup);
 }
