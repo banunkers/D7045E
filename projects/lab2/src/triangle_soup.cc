@@ -13,7 +13,7 @@
  **/
 Point pickPoint(PointSet &set, PointSet &insideCHull) {
 	Point closest;
-	float closestDist = 2;
+	float closestDist = 100;
 	Point origin = Point(0, 0);
 
 	if (insideCHull.size() > 0) {

@@ -10,7 +10,7 @@ bool onLine(Point &a, Point &b, Point &point) {
 		&& (glm::normalize(a - b) == glm::normalize(point - b));
 }
 
-bool insideTriangle(Point &a, Point &b, Point &c, Point point) {
+bool insideTriangle(Point &a, Point &b, Point &c, Point &point) {
 	if (!leftOf(a, b, point) && !leftOf(b, c, point) && !leftOf(c, a, point)) {
 		return true;
 	}

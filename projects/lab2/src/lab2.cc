@@ -3,6 +3,7 @@
 #include "SDL2/SDL.h"
 #include "input.h"
 #include "triangle_soup.h"
+#include "point_line.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -21,9 +22,18 @@ const GLchar* vs =
 "layout(location=0) in vec2 pos;\n"
 "layout(location=1) in vec4 color;\n"
 "layout(location=0) out vec4 Color;\n"
+"uniform float u_angle;\n"
+"uniform bool u_move;\n"
 "void main()\n"
 "{\n"
-"	gl_Position = vec4(pos, -1, 1);\n"
+"	if(u_move){\n"
+"		float random = 50.f * float(gl_VertexID);\n"
+"		float newX = pos[0] + 0.01f * cos(u_angle + random);\n"
+"		float newY = pos[1] + 0.01f * sin(u_angle + random);\n"
+"		gl_Position = vec4(newX, newY, -1, 1);\n"
+"	} else {\n"
+"		gl_Position = vec4(pos, -1, 1);\n"
+"	}\n"
 "	Color = color;\n"
 "}\n";
 
@@ -48,6 +58,8 @@ const GLchar* psEdge =
 
 using namespace Display;
 namespace Lab2 {
+	float angle = 0;
+	bool move = false;
 	bool coloring = false;
 	Point redVertex;
 	Point greenVertex;
@@ -148,14 +160,33 @@ namespace Lab2 {
 				return glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 			} else if (vertex == blueVertex) {
 				return glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-			} else {
-				return glm::vec4(1.0f, 0.35f, 0.35f, 1.0f);
+			} else {	// interpolation
+				GLfloat redDistance = glm::distance(vertex, redVertex);
+				GLfloat greenDistance = glm::distance(vertex, greenVertex);
+				GLfloat blueDistance = glm::distance(vertex, blueVertex);
+				GLfloat alpha = 1.0f;
+				GLfloat maxDistance = 2.0f * sqrtf(2); // greatest distance between two points is (-1, -1) -> (1, 1)
+				
+				// Points outside triangle should decrease in transparency
+				if (!insideTriangle(redVertex, greenVertex, blueVertex, vertex)) {
+					int minDistance = 100;
+
+					for (const auto &cHullPoint: convexHull) {
+						GLfloat distance = glm::distance(vertex, cHullPoint);
+						if ( distance < minDistance) {
+							minDistance = distance;
+						}
+					}
+					alpha = minDistance;	// how close the point is to the convex hull
+				}	
+				return glm::vec4(1.0f - redDistance / maxDistance, 1.0f - greenDistance / maxDistance, 1.0f - blueDistance / maxDistance, alpha);
 			}
 		}
 	}
 
 	/**
-	 * Picks three different vertices (inside the convex hull if possible)
+	 * Picks three different vertices (inside the convex hull if possible).
+	 * The vertices are randomly picked.
 	 **/
 	void Lab2App::pickRGBVertices() {
 		auto insideCHull = PointSet();
@@ -202,8 +233,11 @@ namespace Lab2 {
 				this->window->Close();
 			} else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
 				coloring = !coloring;
-				std::cout << "Coloring scheme set to: " << (coloring ? "default" : "rgb") << "\n";
+				std::cout << "Coloring scheme changed to: " << (coloring ? "rgb" : "default") << "\n";
 				updateBuffers();
+			} else if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+				move = !move;
+				std::cout << (move ? "moving " : "stopping ") << "vertices" <<"\n";			
 			} else if (key == GLFW_KEY_I && action == GLFW_PRESS) {
 				auto inputPointSet = readPointsFromFile();
 				auto pointSetError = validatePointSet(inputPointSet);
@@ -348,20 +382,29 @@ namespace Lab2 {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
 
+			// move vertices
+			if (move) {
+				angle += 0.01f;
+
+				glUseProgram(this->program);
+				GLint moveLocation = glGetUniformLocation(this->program, "u_move");
+				glUniform1i(moveLocation, 1);
+				GLint angleLocation = glGetUniformLocation(this->program, "u_angle");
+				glUniform1f(angleLocation, angle);
+
+				glUseProgram(this->programEdge);
+				moveLocation = glGetUniformLocation(this->programEdge, "u_move");
+				glUniform1i(moveLocation, 1);
+				angleLocation = glGetUniformLocation(this->programEdge, "u_angle");
+				glUniform1f(angleLocation, angle);
+			}
+
 			glUseProgram(this->program);
-
-			// Draw points
-			// glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(unsigned int), &vertexIndices[0], GL_STATIC_DRAW);
-			// glDrawElements(GL_POINTS, vertexIndices.size(), GL_UNSIGNED_INT, (void*)0);
-
-			// Draw convex hull
-			// glBufferData(GL_ELEMENT_ARRAY_BUFFER, cHullIndices.size() * sizeof(unsigned int), &cHullIndices[0], GL_STATIC_DRAW);
-			// glDrawElements(GL_LINE_LOOP, cHullIndices.size(), GL_UNSIGNED_INT, (void*)0);
 
 			// Draw triangles
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * sizeof(unsigned int), &triangleIndices[0], GL_STATIC_DRAW);
 			glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, (void*)0);
-
+			
 			// Draw edges (in order to be able to see the different triangles in the soup)
 			glUseProgram(this->programEdge);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeIndices.size() * sizeof(unsigned int), &edgeIndices[0], GL_STATIC_DRAW);
