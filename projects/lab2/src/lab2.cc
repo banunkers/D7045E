@@ -62,7 +62,7 @@ namespace Lab2 {
 
 	// index buffers
 	std::vector<unsigned int> vertexIndices;
-	std::vector<unsigned int> cHullIndices;
+	// std::vector<unsigned int> cHullIndices;	// not needed?
 	std::vector<unsigned int> triangleIndices;
 	std::vector<unsigned int> edgeIndices;
 
@@ -98,7 +98,6 @@ namespace Lab2 {
 		}
 		return res;
 	}
-
 
 	/**
 	 * Generates an index buffer consisting of the points on the convex hull (with indices of the points in the vertex buffer).
@@ -189,7 +188,7 @@ namespace Lab2 {
 		glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(GLfloat), &vertexBuffer[0], GL_STATIC_DRAW);
 
 		vertexIndices = genVertexIndices();
-		cHullIndices = genCHullIndices();
+		// cHullIndices = genCHullIndices();	// not needed?
 		triangleIndices = genTriangleIndices();
 		edgeIndices = genEdgeIndices();
 	}
@@ -356,8 +355,8 @@ namespace Lab2 {
 			// glDrawElements(GL_POINTS, vertexIndices.size(), GL_UNSIGNED_INT, (void*)0);
 
 			// Draw convex hull
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, cHullIndices.size() * sizeof(unsigned int), &cHullIndices[0], GL_STATIC_DRAW);
-			glDrawElements(GL_LINE_LOOP, cHullIndices.size(), GL_UNSIGNED_INT, (void*)0);
+			// glBufferData(GL_ELEMENT_ARRAY_BUFFER, cHullIndices.size() * sizeof(unsigned int), &cHullIndices[0], GL_STATIC_DRAW);
+			// glDrawElements(GL_LINE_LOOP, cHullIndices.size(), GL_UNSIGNED_INT, (void*)0);
 
 			// Draw triangles
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * sizeof(unsigned int), &triangleIndices[0], GL_STATIC_DRAW);
