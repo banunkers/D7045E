@@ -4,6 +4,6 @@
 #ifndef TRIANGLE_SOUP_H
 #define TRIANGLE_SOUP_H
 
-std::pair<PointSet, PointSet> triangleSoup(PointSet &set);
+std::tuple<PointSet, PointSet, PointSet> triangleSoup(PointSet &set);
 
 #endif

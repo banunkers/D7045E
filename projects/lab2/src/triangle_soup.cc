@@ -110,7 +110,27 @@ PointSet extractTriangles(Node *node) {
 		lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
 		return lTriangles;
 	}
-	return {};
+}
+
+/**
+ * Extracts the edges contained in the leafs of a 2-3 search tree
+ **/
+PointSet extractEdges(Node *node) {
+	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
+		return leaf->triangle->toEdgesVec();
+	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
+		auto lEdges = extractEdges(bn->lst);
+		auto rEdges = extractEdges(bn->rst);
+		lEdges.insert(lEdges.end(), rEdges.begin(), rEdges.end());
+		return lEdges;
+	} else if (TNode *tn = dynamic_cast<TNode*>(node)){
+		auto lEdges = extractEdges(tn->lst);
+		auto mEdges = extractEdges(tn->mst);
+		auto rEdges = extractEdges(tn->rst);
+		lEdges.insert(lEdges.end(), mEdges.begin(), mEdges.end());
+		lEdges.insert(lEdges.end(), rEdges.begin(), rEdges.end());
+		return lEdges;
+	}
 }
 
 /**
@@ -131,12 +151,13 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 	return bn;
 }
 
-std::pair<PointSet,PointSet> triangleSoup(PointSet &set) {
+std::tuple<PointSet,PointSet, PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
 	std::reverse(cHull.begin(), cHull.end()); 	// make CCW
 	
 	if (set.size() <= 3) {
-		return std::make_pair(cHull, PointSet());
+		cHull.pop_back();	// remove duplicate
+		return std::make_tuple(cHull, PointSet(), PointSet());
 	}
 
 	// Create a point set of points inside the convex hull
@@ -161,8 +182,9 @@ std::pair<PointSet,PointSet> triangleSoup(PointSet &set) {
 		tree->insertPoint(point);
 	}
 
-	// get the vertices of all the triangles in the triangle soup
-	auto triangleSoup = extractTriangles(tree);
+	auto triangles = extractTriangles(tree);
+	auto edges = extractEdges(tree);
 	
-	return std::make_pair(cHull, triangleSoup);
+	cHull.pop_back(); // remove duplicate
+	return std::make_tuple(cHull, triangles, edges);
 }

@@ -15,6 +15,10 @@ struct Triangle {
 	PointSet toVec() {
 		return {p0, p1, p2};
 	}
+
+	PointSet toEdgesVec() {
+		return {p0, p1, p0, p2, p1, p2};
+	}
 };
 
 struct Node {
