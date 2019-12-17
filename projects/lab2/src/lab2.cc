@@ -3,6 +3,7 @@
 #include "SDL2/SDL.h"
 #include "input.h"
 #include "triangle_soup.h"
+#include "point_line.h"
 #include <vector>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -13,17 +14,40 @@
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include <stdlib.h>
 #include <iostream>
+#include <algorithm>
 
 const GLchar* vs =
 "#version 310 es\n"
 "precision mediump float;\n"
 "layout(location=0) in vec2 pos;\n"
+"layout(location=1) in vec4 color;\n"
+"layout(location=0) out vec4 Color;\n"
+"uniform float u_angle;\n"
+"uniform bool u_move;\n"
 "void main()\n"
 "{\n"
-"	gl_Position = vec4(pos, -1, 1);\n"
+"	if(u_move){\n"
+"		float random = 50.f * float(gl_VertexID);\n"
+"		float newX = pos[0] + 0.01f * cos(u_angle + random);\n"
+"		float newY = pos[1] + 0.01f * sin(u_angle + random);\n"
+"		gl_Position = vec4(newX, newY, -1, 1);\n"
+"	} else {\n"
+"		gl_Position = vec4(pos, -1, 1);\n"
+"	}\n"
+"	Color = color;\n"
 "}\n";
 
 const GLchar* ps =
+"#version 310 es\n"
+"precision mediump float;\n"
+"layout(location=0) in vec4 color;\n"
+"out vec4 Color;\n"
+"void main()\n"
+"{\n"
+"	Color = color;\n"
+"}\n";
+
+const GLchar* psEdge =
 "#version 310 es\n"
 "precision mediump float;\n"
 "out vec4 Color;\n"
@@ -32,31 +56,160 @@ const GLchar* ps =
 "	Color = vec4(0, 0, 0, 1);\n"
 "}\n";
 
-const GLchar* psPointC =
-"#version 310 es\n"
-"precision mediump float;\n"
-"out vec4 Color;\n"
-"void main()\n"
-"{\n"
-"	Color = vec4(1, 0, 0, 1);\n"
-"}\n";
-
-const GLuint point_attrib_index = 0;
-const GLuint point_record = 1 * sizeof(glm::vec2);
-const GLuint point_offset = 0 * sizeof(glm::vec2);
-
 using namespace Display;
 namespace Lab2 {
-	// Display configs
-	bool displayC = true;
+	float angle = 0;
+	bool move = false;
+	bool coloring = false;
+	Point redVertex;
+	Point greenVertex;
+	Point blueVertex;
 
-	PointSet drawPoints;
-	PointSet drawCHull;
-	Point drawC;
-	PointSet drawTriangulation;
+	PointSet vertices;	// all the points
+	PointSet convexHull;	// the points on the convex hull 
+	PointSet triangles;	// the triangles in the 2-3 seach tree's leafs
+	PointSet edges; // the edges of triangles in the leafs
+
+	std::vector<GLfloat> vertexBuffer;
+
+	// index buffers
+	std::vector<unsigned int> vertexIndices;
+	std::vector<unsigned int> triangleIndices;
+	std::vector<unsigned int> edgeIndices;
 
 	Lab2App::Lab2App() {}
 	Lab2App::~Lab2App() {}
+
+	/**
+	 * Generates a vertex buffer given vertices with x and y coordinate.
+	 * The generated vertex buffer consists for vertices with a record of size 6
+	 * (2 for pos and 4 for color).
+	 **/
+	std::vector<GLfloat> Lab2App::genVertexBuffer() {
+		auto res = std::vector<GLfloat>();
+		for (auto &vertex: vertices) {
+			res.push_back(vertex.x);
+			res.push_back(vertex.y);
+			auto vertexColor = getVertexColor(vertex);
+			res.push_back(vertexColor.r); 	// r
+			res.push_back(vertexColor.g); 	// g
+			res.push_back(vertexColor.b); 	// b
+			res.push_back(vertexColor.a); 	// a
+		}
+		return res;
+	}
+
+	/**
+	 * Generates an index buffer consisting of all the vertices
+	 **/
+	std::vector<unsigned int> Lab2App::genVertexIndices() {
+		auto res = std::vector<unsigned int>();
+		for (int i = 0; i < vertices.size(); i++) {
+			res.push_back(i);
+		}
+		return res;
+	}
+
+	/**
+	 * Generates an index buffer consisting of all the triangles of the triangle soup
+	 **/
+	std::vector<unsigned int> Lab2App::genTriangleIndices() {
+		auto res = std::vector<unsigned int>();
+		for (const auto &point: triangles) {
+			auto verticesIndex = std::find(vertices.begin(), vertices.end(), point);
+			res.push_back(verticesIndex - vertices.begin());
+		}
+		return res;
+	}
+
+	/**
+	 * Generates and index buffer consisting of all the edges of the triangles soup
+	 **/
+	std::vector<unsigned int> Lab2App::genEdgeIndices() {
+		auto res = std::vector<unsigned int>();
+		for (const auto &point: edges) {
+			auto verticesIndex = std::find(vertices.begin(), vertices.end(), point);
+			res.push_back(verticesIndex - vertices.begin());
+		}
+		return res;
+	}
+
+	/**
+	 * Calculates the vertex color
+	 **/
+	glm::vec4 Lab2App::getVertexColor(Point &vertex) {
+		if (!coloring) {	// "default" coloring
+			return glm::vec4(1.0f, 0.35f, 0.35f, 1.0f);
+		} else {	// rgb with interpolation
+			if (vertex == redVertex) {
+				return glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			} else if (vertex == greenVertex) {
+				return glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+			} else if (vertex == blueVertex) {
+				return glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+			} else {	// interpolation
+				GLfloat redDistance = glm::distance(vertex, redVertex);
+				GLfloat greenDistance = glm::distance(vertex, greenVertex);
+				GLfloat blueDistance = glm::distance(vertex, blueVertex);
+				GLfloat alpha = 1.0f;
+				// GLfloat maxDistance = 2.0f * sqrtf(2); // greatest distance between two points is (-1, -1) -> (1, 1)
+				GLfloat maxDistance = sqrtf(1.5);	// smaller distance gives better fading of colors (otherwise mostly white)
+				
+				// Points outside triangle should decrease in transparency
+				if (!insideTriangle(redVertex, greenVertex, blueVertex, vertex)) {
+					int minDistance = 100;
+
+					for (const auto &cHullPoint: convexHull) {
+						GLfloat distance = glm::distance(vertex, cHullPoint);
+						if ( distance < minDistance) {
+							minDistance = distance;
+						}
+					}
+					alpha = minDistance;	// how close the point is to the convex hull
+				}	
+				return glm::vec4(1.0f - redDistance / maxDistance, 1.0f - greenDistance / maxDistance, 1.0f - blueDistance / maxDistance, alpha);
+			}
+		}
+	}
+
+	/**
+	 * Picks three different vertices (inside the convex hull if possible).
+	 * The vertices are randomly picked.
+	 **/
+	void Lab2App::pickRGBVertices() {
+		auto insideCHull = PointSet();
+		for (const auto &vertex: vertices) {
+			if (std::find(convexHull.begin(), convexHull.end(), vertex) == convexHull.end()) {
+				insideCHull.push_back(vertex);
+			}
+		}
+		if (insideCHull.size() < 3) {
+			redVertex = vertices[0];
+			greenVertex = vertices[1];
+			blueVertex = vertices[2];
+		} else {
+			redVertex = insideCHull[0];
+			greenVertex = insideCHull[1];
+			blueVertex = insideCHull[2];
+		}
+	}
+
+	/**
+	 * Updates the vertex buffer and generates new index buffers
+	 **/
+	void Lab2App::updateBuffers() {
+		if (coloring) {
+			pickRGBVertices();
+		}
+		
+		vertexBuffer = genVertexBuffer();
+		glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(GLfloat), &vertexBuffer[0], GL_STATIC_DRAW);
+
+		vertexIndices = genVertexIndices();
+		triangleIndices = genTriangleIndices();
+		edgeIndices = genEdgeIndices();
+	}
 
 	bool Lab2App::Open() {
 		App::Open();
@@ -65,6 +218,13 @@ namespace Lab2 {
 		this->window->SetKeyPressFunction([this](int32 key, int32 scancode, int32 action, int32 mods) {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 				this->window->Close();
+			} else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+				coloring = !coloring;
+				std::cout << "Coloring scheme changed to: " << (coloring ? "rgb" : "default") << "\n";
+				updateBuffers();
+			} else if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+				move = !move;
+				std::cout << (move ? "moving " : "stopping ") << "vertices" <<"\n";			
 			} else if (key == GLFW_KEY_I && action == GLFW_PRESS) {
 				auto inputPointSet = readPointsFromFile();
 				auto pointSetError = validatePointSet(inputPointSet);
@@ -77,8 +237,9 @@ namespace Lab2 {
 					}
 					this->window->Close();
 				} else {
-					drawPoints = inputPointSet;	// draw points
-					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(inputPointSet);
+					vertices = inputPointSet;
+					tie(convexHull, triangles, edges) = triangleSoup(inputPointSet);
+					updateBuffers();
 				}
 			} else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				std::cout << "Enter a number n >= 3 and press enter\n";
@@ -100,8 +261,9 @@ namespace Lab2 {
 					}
 					printf("--------------------------------------------------------------\n");
 
-					drawPoints = randomSet;	// draw points
-					tie(drawCHull, drawC, drawTriangulation) = triangleSoup(randomSet);
+					vertices = randomSet;
+					tie(convexHull, triangles, edges) = triangleSoup(randomSet);
+					updateBuffers();
 				}
 			}
 		});
@@ -134,10 +296,10 @@ namespace Lab2 {
 			glShaderSource(this->pixelShader, 1, &ps, &length);
 			glCompileShader(this->pixelShader);
 
-			this->cPointPixelShader = glCreateShader(GL_FRAGMENT_SHADER);
-			length = (GLint)std::strlen(psPointC);
-			glShaderSource(this->cPointPixelShader, 1, &psPointC, &length);
-			glCompileShader(this->cPointPixelShader);			
+			this->pixelShaderEdge = glCreateShader(GL_FRAGMENT_SHADER);
+			length = (GLint)std::strlen(psEdge);
+			glShaderSource(this->pixelShaderEdge, 1, &psEdge, &length);
+			glCompileShader(this->pixelShaderEdge);
 
 			// get error log
 			shaderLogSize;
@@ -162,71 +324,82 @@ namespace Lab2 {
 				delete[] buf;
 			}
 
-			// second program for coloring c point
-			this->cPointProgram = glCreateProgram();
-			glAttachShader(this->cPointProgram, this->vertexShader);
-			glAttachShader(this->cPointProgram, this->cPointPixelShader);
-			glLinkProgram(this->cPointProgram);
-			glGetProgramiv(this->cPointProgram, GL_INFO_LOG_LENGTH, &shaderLogSize);
+			// create program for coloring edges
+			this->programEdge = glCreateProgram();
+			glAttachShader(this->programEdge, this->vertexShader);
+			glAttachShader(this->programEdge, this->pixelShaderEdge);
+			glLinkProgram(this->programEdge);
+			glGetProgramiv(this->programEdge, GL_INFO_LOG_LENGTH, &shaderLogSize);
 			if (shaderLogSize > 0) {
 				GLchar* buf = new GLchar[shaderLogSize];
-				glGetProgramInfoLog(this->cPointProgram, shaderLogSize, NULL, buf);
+				glGetProgramInfoLog(this->programEdge, shaderLogSize, NULL, buf);
 				printf("[PROGRAM LINK ERROR]: %s", buf);
 				delete[] buf;
 			}
-
-			// setup array buffer
-			glGenBuffers(1, &this->buf);
-			glUseProgram(this->program);
-			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glEnableVertexAttribArray(point_attrib_index);
-			glVertexAttribPointer(point_attrib_index, 2, GL_FLOAT, GL_FALSE, point_record, (GLvoid*)point_offset);
 			
+			// setup vbo
+			glGenBuffers(1, &this->vbo);
+			glUseProgram(this->program);
+			glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float32) * 6, NULL);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float32) * 6, (GLvoid*)(sizeof(float32) * 2));
+
+			// setup ibo
+			glGenBuffers(1, &this->ibo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+
 			glPointSize(10);
-			glLineWidth(2);
+			glLineWidth(3);
+
+			// enable alpha
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glEnable(GL_BLEND);
+
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			
 			return true;
 		}
 		return false;
 	}
 
 	void Lab2App::Run() {
-		// this->points = {
-		// 	glm::vec2(-0.5, 0.5),
-		// 	glm::vec2(0.5, 0.5),
-		// 	glm::vec2(-0.5, -0.5),
-		// 	glm::vec2(0.5, -0.5)
-		// };
-
 		while (this->window->IsOpen()) {
 			glClear(GL_COLOR_BUFFER_BIT);
 			this->window->Update();
-			
+
+			// move vertices
+			if (move) {
+				angle += 0.01f;
+
+				glUseProgram(this->program);
+				GLint moveLocation = glGetUniformLocation(this->program, "u_move");
+				glUniform1i(moveLocation, 1);
+				GLint angleLocation = glGetUniformLocation(this->program, "u_angle");
+				glUniform1f(angleLocation, angle);
+
+				glUseProgram(this->programEdge);
+				moveLocation = glGetUniformLocation(this->programEdge, "u_move");
+				glUniform1i(moveLocation, 1);
+				angleLocation = glGetUniformLocation(this->programEdge, "u_angle");
+				glUniform1f(angleLocation, angle);
+			}
+
 			glUseProgram(this->program);
-			// Draw convex hull
-			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, drawCHull.size() * sizeof(glm::vec2), &drawCHull[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, point_attrib_index, drawCHull.size());
 
-			// Draw points
-			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, drawPoints.size() * sizeof(glm::vec2), &drawPoints[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_POINTS, point_attrib_index, drawPoints.size());
-
-			// Draw triangulation
-			glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-			glBufferData(GL_ARRAY_BUFFER, drawTriangulation.size() * sizeof(glm::vec2), &drawTriangulation[0], GL_STATIC_DRAW);
-			glDrawArrays(GL_LINES, point_attrib_index, drawTriangulation.size());
-
-			// Draw c point
-			if (displayC) {
-				glUseProgram(this->cPointProgram);
-				glBindBuffer(GL_ARRAY_BUFFER, this->buf);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2), &drawC, GL_STATIC_DRAW);
-				glDrawArrays(GL_POINTS, point_attrib_index, 1);
+			// Draw triangles
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * sizeof(unsigned int), &triangleIndices[0], GL_STATIC_DRAW);
+			glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, (void*)0);
+			
+			// Draw edges (in order to be able to see the different triangles in the soup)
+			if (!coloring) {
+				glUseProgram(this->programEdge);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeIndices.size() * sizeof(unsigned int), &edgeIndices[0], GL_STATIC_DRAW);
+				glDrawElements(GL_LINES, edgeIndices.size(), GL_UNSIGNED_INT, (void*)0);
 			}
 
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 			this->window->SwapBuffers();
 		}
 	}

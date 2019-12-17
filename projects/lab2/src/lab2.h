@@ -13,18 +13,22 @@ namespace Lab2 {
 			bool Open();
 			void Run();
 		private:
+			std::vector<GLfloat> genVertexBuffer();
+			std::vector<unsigned int> genVertexIndices();
+			std::vector<unsigned int> genTriangleIndices();
+			std::vector<unsigned int> genEdgeIndices();
+			void updateBuffers();
+			void pickRGBVertices();
+			glm::vec4 getVertexColor(Point &vertex);
+
 			GLuint program;
-			GLuint cPointProgram;
+			GLuint programEdge;
 			GLuint vertexShader;
 			GLuint pixelShader;
-			GLuint cPointPixelShader;
-			GLuint buf;
+			GLuint pixelShaderEdge;
+			GLuint vbo;
+			GLuint ibo;
 			Display::Window* window;
 			std::string numInput;
 	};
-
-	extern PointSet drawPoints;
-	extern PointSet drawCHull;
-	extern Point drawC;
-	extern PointSet drawTriangulation;
 };

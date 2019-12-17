@@ -56,7 +56,7 @@ PointSet randomPointSet(int numPoints) {
 }
 
 int validatePointSet(PointSet &set) {
-	float maxY, minY, maxX, minX;
+	float maxY = -1, minY = 1, maxX = -1, minX = 1;
 
 	// Check for duplicate points and extract min and max coordinates
 	for (int i = 0; i < set.size(); i++) {
@@ -82,8 +82,10 @@ int validatePointSet(PointSet &set) {
 	}
 
 	// Check if origin is inside the convex hull of the point set
-	if (!(maxY > 0 && minY < 0 && maxX > 0 && minX < 0)) {
-		return 2;
+	if (set.size() > 3) {
+		if (!(maxY > 0 && minY < 0 && maxX > 0 && minX < 0)) {
+			return 2;
+		}
 	}
 
 	// point set ok

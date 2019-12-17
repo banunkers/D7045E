@@ -13,4 +13,6 @@ bool leftOf(Point &a, Point &b, Point &point);
 
 bool onLine(Point &a, Point &b, Point &point);
 
+bool insideTriangle(Point &a, Point &b, Point &c, Point &point);
+
 #endif

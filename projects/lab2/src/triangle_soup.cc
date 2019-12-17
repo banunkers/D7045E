@@ -13,7 +13,7 @@
  **/
 Point pickPoint(PointSet &set, PointSet &insideCHull) {
 	Point closest;
-	float closestDist = 2;
+	float closestDist = 100;
 	Point origin = Point(0, 0);
 
 	if (insideCHull.size() > 0) {
@@ -91,14 +91,12 @@ PointSet convexHull(PointSet &set) {
 
 /**
  * Extracts triangles contained in the leafs of a 2-3 search tree
- * @param node the root of the 2-3 search tree
- * @returns a vector containing the vertices create the triangles
+ * @param node a node in the 2-3 search tree
+ * @returns a vector containing the vertices of the triangles
  **/
 PointSet extractTriangles(Node *node) {
 	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
-		auto triangle = leaf->triangle->toVec();
-		printf("found p0:(%f, %f) -> p1:(%f, %f) -> p2(%f, %f)\n", triangle[0].x, triangle[0].y, triangle[1].x, triangle[1].y, triangle[2].x, triangle[2].y);
-		return {triangle[0], triangle[1], triangle[0], triangle[2], triangle[1], triangle[2]};
+		return leaf->triangle->toVec();
 	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
 		auto lTriangles = extractTriangles(bn->lst);
 		auto rTriangles = extractTriangles(bn->rst);
@@ -112,7 +110,27 @@ PointSet extractTriangles(Node *node) {
 		lTriangles.insert(lTriangles.end(), rTriangles.begin(), rTriangles.end());
 		return lTriangles;
 	}
-	return {};
+}
+
+/**
+ * Extracts the edges contained in the leafs of a 2-3 search tree
+ **/
+PointSet extractEdges(Node *node) {
+	if (Leaf *leaf = dynamic_cast<Leaf*>(node)) {	// leaf
+		return leaf->triangle->toEdgesVec();
+	} else if (BNode *bn = dynamic_cast<BNode*>(node)) {	// binary
+		auto lEdges = extractEdges(bn->lst);
+		auto rEdges = extractEdges(bn->rst);
+		lEdges.insert(lEdges.end(), rEdges.begin(), rEdges.end());
+		return lEdges;
+	} else if (TNode *tn = dynamic_cast<TNode*>(node)){
+		auto lEdges = extractEdges(tn->lst);
+		auto mEdges = extractEdges(tn->mst);
+		auto rEdges = extractEdges(tn->rst);
+		lEdges.insert(lEdges.end(), mEdges.begin(), mEdges.end());
+		lEdges.insert(lEdges.end(), rEdges.begin(), rEdges.end());
+		return lEdges;
+	}
 }
 
 /**
@@ -133,12 +151,18 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 	return bn;
 }
 
-std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
+/**
+ * Calculates a triangle soup given a point set consisting of n >= 3 points
+ * @returns a tuple containing the convex hull, triangles and edges of the triangle soup
+ **/
+std::tuple<PointSet,PointSet, PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
 	std::reverse(cHull.begin(), cHull.end()); 	// make CCW
 	
 	if (set.size() <= 3) {
-		return std::make_tuple(cHull, Point(), PointSet());
+		// cHull.pop_back();	// remove duplicate
+		auto edges = PointSet{cHull[0], cHull[1], cHull[0], cHull[2], cHull[1], cHull[2]};
+		return std::make_tuple(cHull, cHull, edges);
 	}
 
 	// Create a point set of points inside the convex hull
@@ -155,18 +179,17 @@ std::tuple<PointSet, Point, PointSet> triangleSoup(PointSet &set) {
 		insideCHull.erase(std::find(insideCHull.begin(), insideCHull.end(), c));
 	}
 
-	// printf("CHULL\n");
-	// for (int i = 0; i < cHull.size(); i++) {
-	// 	printf("(%f, %f)\n", cHull[i].x, cHull[i].y);
-	// }
-
+	// build initial 2-3 search three containing the convex hull and point c
 	auto tree = buildTree(c, cHull, nullptr);
 
+	// Insert every point inside the convex hull in the 2-3 search tree
 	for (auto &point: insideCHull) {
 		tree->insertPoint(point);
 	}
 
-	auto triangleSoup = extractTriangles(tree);
+	auto triangles = extractTriangles(tree);
+	auto edges = extractEdges(tree);
 	
-	return std::make_tuple(cHull, c, triangleSoup);
+	cHull.pop_back(); // remove duplicate
+	return std::make_tuple(cHull, triangles, edges);
 }
