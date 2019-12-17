@@ -153,14 +153,13 @@ Node* buildTree(Point &c, PointSet cHull, Node *parent) {
 
 /**
  * Calculates a triangle soup given a point set consisting of n >= 3 points
- * @returns a tuple containing the convex hull, triangles and edges of the triangle soup
+ * @returns a tuple containing the convex hull, triangle vertices and edges of the triangle soup
  **/
 std::tuple<PointSet,PointSet, PointSet> triangleSoup(PointSet &set) {
 	auto cHull = convexHull(set);
 	std::reverse(cHull.begin(), cHull.end()); 	// make CCW
 	
 	if (set.size() <= 3) {
-		// cHull.pop_back();	// remove duplicate
 		auto edges = PointSet{cHull[0], cHull[1], cHull[0], cHull[2], cHull[1], cHull[2]};
 		return std::make_tuple(cHull, cHull, edges);
 	}

@@ -61,6 +61,7 @@ namespace Lab2 {
 	float angle = 0;
 	bool move = false;
 	bool coloring = false;
+	bool showPoints = true;
 	Point redVertex;
 	Point greenVertex;
 	Point blueVertex;
@@ -392,11 +393,16 @@ namespace Lab2 {
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * sizeof(unsigned int), &triangleIndices[0], GL_STATIC_DRAW);
 			glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, (void*)0);
 			
-			// Draw edges (in order to be able to see the different triangles in the soup)
+			// Draw edges and points (in order to be able to see the different triangles in the soup)
 			if (!coloring) {
 				glUseProgram(this->programEdge);
 				glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeIndices.size() * sizeof(unsigned int), &edgeIndices[0], GL_STATIC_DRAW);
 				glDrawElements(GL_LINES, edgeIndices.size(), GL_UNSIGNED_INT, (void*)0);
+
+				if (showPoints) {
+					glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(unsigned int), &vertexIndices[0], GL_STATIC_DRAW);
+					glDrawElements(GL_POINTS, vertexIndices.size(), GL_UNSIGNED_INT, (void*)0);
+				}
 			}
 
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
