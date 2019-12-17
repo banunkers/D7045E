@@ -15,7 +15,6 @@ namespace Lab2 {
 		private:
 			std::vector<GLfloat> genVertexBuffer();
 			std::vector<unsigned int> genVertexIndices();
-			std::vector<unsigned int> genCHullIndices();
 			std::vector<unsigned int> genTriangleIndices();
 			std::vector<unsigned int> genEdgeIndices();
 			void updateBuffers();

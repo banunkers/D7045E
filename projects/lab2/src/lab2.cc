@@ -74,7 +74,6 @@ namespace Lab2 {
 
 	// index buffers
 	std::vector<unsigned int> vertexIndices;
-	// std::vector<unsigned int> cHullIndices;	// not needed?
 	std::vector<unsigned int> triangleIndices;
 	std::vector<unsigned int> edgeIndices;
 
@@ -107,18 +106,6 @@ namespace Lab2 {
 		auto res = std::vector<unsigned int>();
 		for (int i = 0; i < vertices.size(); i++) {
 			res.push_back(i);
-		}
-		return res;
-	}
-
-	/**
-	 * Generates an index buffer consisting of the points on the convex hull (with indices of the points in the vertex buffer).
-	 **/
-	std::vector<unsigned int> Lab2App::genCHullIndices() {
-		auto res = std::vector<unsigned int>();
-		for (const auto &point: convexHull) {
-			auto verticesIndex = std::find(vertices.begin(), vertices.end(), point);
-			res.push_back(verticesIndex - vertices.begin()); // the index of the vertex in the vertex buffer
 		}
 		return res;
 	}
@@ -219,7 +206,6 @@ namespace Lab2 {
 		glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(GLfloat), &vertexBuffer[0], GL_STATIC_DRAW);
 
 		vertexIndices = genVertexIndices();
-		// cHullIndices = genCHullIndices();	// not needed?
 		triangleIndices = genTriangleIndices();
 		edgeIndices = genEdgeIndices();
 	}
