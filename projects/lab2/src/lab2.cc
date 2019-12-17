@@ -152,7 +152,8 @@ namespace Lab2 {
 				GLfloat greenDistance = glm::distance(vertex, greenVertex);
 				GLfloat blueDistance = glm::distance(vertex, blueVertex);
 				GLfloat alpha = 1.0f;
-				GLfloat maxDistance = 2.0f * sqrtf(2); // greatest distance between two points is (-1, -1) -> (1, 1)
+				// GLfloat maxDistance = 2.0f * sqrtf(2); // greatest distance between two points is (-1, -1) -> (1, 1)
+				GLfloat maxDistance = sqrtf(1.5);	// smaller distance gives better fading of colors (otherwise mostly white)
 				
 				// Points outside triangle should decrease in transparency
 				if (!insideTriangle(redVertex, greenVertex, blueVertex, vertex)) {
@@ -392,10 +393,12 @@ namespace Lab2 {
 			glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, (void*)0);
 			
 			// Draw edges (in order to be able to see the different triangles in the soup)
-			glUseProgram(this->programEdge);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeIndices.size() * sizeof(unsigned int), &edgeIndices[0], GL_STATIC_DRAW);
-			glDrawElements(GL_LINES, edgeIndices.size(), GL_UNSIGNED_INT, (void*)0);
-			
+			if (!coloring) {
+				glUseProgram(this->programEdge);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeIndices.size() * sizeof(unsigned int), &edgeIndices[0], GL_STATIC_DRAW);
+				glDrawElements(GL_LINES, edgeIndices.size(), GL_UNSIGNED_INT, (void*)0);
+			}
+
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			this->window->SwapBuffers();
 		}
