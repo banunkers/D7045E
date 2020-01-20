@@ -29,8 +29,7 @@ class Mesh {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementBufferObject);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices->size() * sizeof(GLuint), this->indices->data(), GL_STATIC_DRAW);
 
-            // setup vertex attrib pointers
-            // position
+            // setup vertex attrib pointer
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
         }
