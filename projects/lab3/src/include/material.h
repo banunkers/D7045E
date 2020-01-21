@@ -11,5 +11,9 @@ class Material {
             this->shaderProgram = shaderProgram;
         }
 
+        ShaderProgram* getShaderProgram() {
+            return this->shaderProgram;
+        }
+        
         virtual void applyMaterial() = 0;
 };

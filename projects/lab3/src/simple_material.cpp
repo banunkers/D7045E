@@ -1,11 +1,17 @@
 #pragma once
 
-#include "material.h"
+#include "simple_material.h"
 
-class SimpleMaterial : public Material {
-    private:
+SimpleMaterial::SimpleMaterial(Color color)
+    : Material(
+        new ShaderProgram(std::vector<Shader*> {
+            new Shader(this->vertexShader, Shader::VERTEX),
+            new Shader(this->fragmentShader, Shader::FRAGMENT)
+        })
+    ) {
+    this->color = color;
+}
 
-    public:
-        SimpleMaterial();
-
-};
+void SimpleMaterial::applyMaterial() {
+    this->getShaderProgram()->activateProgram();
+}

@@ -1,6 +1,6 @@
 #include "shader.h"
 
-Shader::Shader(GLchar* source, Type type) {
+Shader::Shader(const GLchar* source, Type type) {
     this->shaderHandle = glCreateShader(type == VERTEX ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
     GLint length = (GLint) std::strlen(source);
     glShaderSource(this->shaderHandle, 1, &source, &length);
