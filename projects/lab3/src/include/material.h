@@ -11,7 +11,5 @@ class Material {
             this->shaderProgram = shaderProgram;
         }
 
-        ~Material() {}
-
         virtual void applyMaterial() = 0;
 };
