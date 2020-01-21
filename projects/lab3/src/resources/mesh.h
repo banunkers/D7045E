@@ -1,10 +1,9 @@
 #pragma once
 
-#include <glm.hpp>
 #include <vector>
+#include <GL/glew.h>
 
-#include "glew.h"
-#include "vertex.h"
+#include "types.h"
 
 class Mesh {
     private:
@@ -32,6 +31,9 @@ class Mesh {
             // setup vertex attrib pointer
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+            // unbind to avoid accidental modification
+            glBindVertexArray(0);
         }
 
     public:
@@ -45,5 +47,17 @@ class Mesh {
             glDeleteVertexArrays(1, &this->vertexArrayObject);
             glDeleteBuffers(1, &this->vertexBufferObject);
             glDeleteBuffers(1, &this->elementBufferObject);
+        }
+
+        void bindVAO() {
+            glBindVertexArray(this->vertexArrayObject);
+        }
+
+        void unbindVAO() {
+            glBindVertexArray(0);
+        }
+
+        unsigned int getNumIndices() {
+            return this->indices->size();
         }
 };

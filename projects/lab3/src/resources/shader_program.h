@@ -2,8 +2,8 @@
 
 #include <iostream>
 #include <vector>
+#include <GL/glew.h>
 
-#include "glew.h"
 #include "shader.h"
 
 class ShaderProgram {

@@ -2,11 +2,7 @@
 
 #include <cstring>
 #include <iostream>
-
-#include "glew.h"
-
-
-
+#include <GL/glew.h>
 
 class Shader {
     enum Type {
