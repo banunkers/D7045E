@@ -35,9 +35,9 @@
 			"label": "run",
 			"type": "shell",
 			"options": {
-				"cwd": "${workspaceRoot}/projects/lab2"
+				"cwd": "${workspaceRoot}/projects/lab3"
 			},
-			"command": "./lab2",
+			"command": "./lab3",
 			"presentation": {
 				"showReuseMessage": false,
 				"reveal": "always",
