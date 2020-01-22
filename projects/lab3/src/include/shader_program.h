@@ -9,11 +9,12 @@
 class ShaderProgram {
     private:
         std::vector<Shader*> shaders;
-        GLuint program;
 
         void linkShaders();
 
     public:
+        GLuint program;
+        
         ShaderProgram(std::vector<Shader*> shaders);
         ~ShaderProgram();
 

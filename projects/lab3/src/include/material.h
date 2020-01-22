@@ -3,7 +3,7 @@
 #include "shader_program.h"
 
 class Material {
-    private:
+    protected:
         ShaderProgram* shaderProgram;
 
     public:

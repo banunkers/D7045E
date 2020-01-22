@@ -13,5 +13,13 @@ SimpleMaterial::SimpleMaterial(Color color)
 }
 
 void SimpleMaterial::applyMaterial() {
-    this->getShaderProgram()->activateProgram();
+    this->shaderProgram->activateProgram();
+
+    // set color uniform
+    GLint colorUniformLoc = glGetUniformLocation(this->shaderProgram->program, "u_color");
+    if (colorUniformLoc != -1) {
+        glUniform4f(colorUniformLoc, this->color.r, this->color.g, this->color.b, this->color.a);
+    } else {
+        printf("Failed to locate color uniform for SimpleMaterial");
+    }
 }
