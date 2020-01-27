@@ -12,13 +12,13 @@
 GraphicNode createSimpleCube(Color color, glm::vec3 position) {
     std::vector<Vertex> vertices = {
         Vertex(-1.0f/4.0f, -1.0f/4.0f, -1.0f/4.0f), // 0
-        Vertex(-1.0f/4.0f, -1.0f/4.0f, 1.0f/4.0f), // 1
-        Vertex(-1.0f/4.0f, 1.0f/4.0f, 1.0f/4.0f), // 2
-        Vertex(1.0f/4.0f, 1.0f/4.0f, -1.0f/4.0f), // 3
-        Vertex(-1.0f/4.0f, 1.0f/4.0f, -1.0f/4.0f), // 4
-        Vertex(1.0f/4.0f, -1.0f/4.0f, 1.0f/4.0f),  // 5
-        Vertex(1.0f/4.0f, -1.0f/4.0f, -1.0f/4.0f), // 6
-        Vertex(1.0f/4.0f, 1.0f/4.0f, 1.0f/4.0f)   // 7
+        Vertex(-1.0f/4.0f, -1.0f/4.0f, 1.0f/4.0f),  // 1
+        Vertex(-1.0f/4.0f, 1.0f/4.0f, 1.0f/4.0f),   // 2
+        Vertex(1.0f/4.0f, 1.0f/4.0f, -1.0f/4.0f),   // 3
+        Vertex(-1.0f/4.0f, 1.0f/4.0f, -1.0f/4.0f),  // 4
+        Vertex(1.0f/4.0f, -1.0f/4.0f, 1.0f/4.0f),   // 5
+        Vertex(1.0f/4.0f, -1.0f/4.0f, -1.0f/4.0f),  // 6
+        Vertex(1.0f/4.0f, 1.0f/4.0f, 1.0f/4.0f)     // 7
     };
 
     std::vector<GLuint> indices = {

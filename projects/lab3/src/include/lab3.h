@@ -6,6 +6,7 @@
 #include "core/app.h"
 #include "render/window.h"
 #include "graphic_node.h"
+#include "camera.h"
 
 class Lab3 : public Core::App {
     public:
@@ -19,6 +20,7 @@ class Lab3 : public Core::App {
     private:
         Display::Window* window;
         std::vector<GraphicNode> scene;
+        Camera* camera;
 
         void initScene();
 };

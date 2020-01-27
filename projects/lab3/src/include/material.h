@@ -11,5 +11,5 @@ class Material {
             this->shaderProgram = shaderProgram;
         }
         
-        virtual void applyMaterial() = 0;
+        virtual void applyMaterial(glm::mat4 transform, glm::mat4 view) = 0;
 };

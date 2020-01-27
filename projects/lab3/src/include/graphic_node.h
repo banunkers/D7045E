@@ -18,5 +18,5 @@ class GraphicNode {
         
         void translate(glm::vec3 matrix);
         void rotate(float degrees, glm::vec3 rotAxis);
-        void draw();
+        void draw(glm::mat4 view);
 };
