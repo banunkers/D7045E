@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-Mesh::Mesh(std::vector<Vertex>* vertices, std::vector<GLuint>* indices) {
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) {
     this->vertices = vertices;
     this->indices = indices;
     initMesh();
@@ -20,12 +20,12 @@ void Mesh::initMesh() {
     // setup VBO
     glGenBuffers(1, &this->vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, this->vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, this->vertices->size() * sizeof(Vertex), this->vertices->data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(Vertex), this->vertices.data(), GL_STATIC_DRAW);
 
     // setup EBO
     glGenBuffers(1, &this->elementBufferObject);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->elementBufferObject);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices->size() * sizeof(GLuint), this->indices->data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), this->indices.data(), GL_STATIC_DRAW);
 
     // setup vertex attrib pointer
     glEnableVertexAttribArray(0);
@@ -44,5 +44,5 @@ void Mesh::unbindVAO() {
 }
 
 unsigned int Mesh::getNumIndices() {
-    return this->indices->size();
+    return this->indices.size();
 }

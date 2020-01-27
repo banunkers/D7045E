@@ -1,14 +1,18 @@
-#pragma once
+#include <vector>
+#include <iostream>
 
 #include "simple_material.h"
+#include "material.h"
+#include "shader.h"
+#include "shader_program.h"
+#include "types.h"
 
-SimpleMaterial::SimpleMaterial(Color color)
-    : Material(
-        new ShaderProgram(std::vector<Shader*> {
-            new Shader(this->vertexShader, Shader::VERTEX),
-            new Shader(this->fragmentShader, Shader::FRAGMENT)
+SimpleMaterial::SimpleMaterial(Color color) : Material(
+        new ShaderProgram(std::vector<Shader> {
+            Shader(this->vertexShader, Shader::VERTEX),
+            Shader(this->fragmentShader, Shader::FRAGMENT)
         })
-    ) {
+) {
     this->color = color;
 }
 

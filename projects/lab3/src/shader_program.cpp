@@ -1,6 +1,9 @@
+#include <vector>
+#include <iostream>
+
 #include "shader_program.h"
 
-ShaderProgram::ShaderProgram(std::vector<Shader*> shaders) {
+ShaderProgram::ShaderProgram(const std::vector<Shader>& shaders) {
     this->shaders = shaders;
     linkShaders();
 }
@@ -12,8 +15,8 @@ ShaderProgram::~ShaderProgram() {
 void ShaderProgram::linkShaders() {
     this->program = glCreateProgram();
 
-    for (auto const& shader: shaders) {
-        glAttachShader(this->program, shader->getHandle());
+    for (auto& shader: shaders) {
+        glAttachShader(this->program, shader.getHandle());
     }
 
     glLinkProgram(this->program);

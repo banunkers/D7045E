@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <GL/glew.h>
 
@@ -8,14 +7,14 @@
 
 class ShaderProgram {
     private:
-        std::vector<Shader*> shaders;
+        std::vector<Shader> shaders;
 
         void linkShaders();
 
     public:
         GLuint program;
         
-        ShaderProgram(std::vector<Shader*> shaders);
+        ShaderProgram(const std::vector<Shader>& shaders);
         ~ShaderProgram();
 
         void activateProgram();

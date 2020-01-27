@@ -1,8 +1,12 @@
+#include <iostream>
+#include <cstring>
+
 #include "shader.h"
 
 Shader::Shader(const GLchar* source, Type type) {
-    this->shaderHandle = glCreateShader(type == VERTEX ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
-    GLint length = (GLint) std::strlen(source);
+    this->shaderHandle = glCreateShader(type == Type::VERTEX ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+    GLint length = (GLint)std::strlen(source);
+
     glShaderSource(this->shaderHandle, 1, &source, &length);
     glCompileShader(this->shaderHandle);
 
@@ -12,7 +16,7 @@ Shader::Shader(const GLchar* source, Type type) {
     if (shaderLogSize > 0) {
         GLchar* buf = new GLchar[shaderLogSize];
         glGetShaderInfoLog(this->shaderHandle, shaderLogSize, NULL, buf);
-        printf("[SHADER COMPILE ERROR]: %s", buf);
+        printf("[SHADER COMPILE ERROR]: %s\n", buf);
         delete[] buf;
     }
 }

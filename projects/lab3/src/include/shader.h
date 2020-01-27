@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstring>
-#include <iostream>
 #include <GL/glew.h>
 
 class Shader {
@@ -10,6 +8,7 @@ class Shader {
             VERTEX,
             FRAGMENT
         };
+        
         Shader(const GLchar* source, Type type);
         ~Shader();
 
