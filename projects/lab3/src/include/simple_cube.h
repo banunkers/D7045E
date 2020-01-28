@@ -32,7 +32,7 @@ GraphicNode createSimpleCube(Color color, glm::vec3 position) {
         7, 6, 3,
         6, 7, 5,
         7, 3, 4,
-        7, 3, 2,
+        7, 4, 2,
         7, 2, 5
     };
 
