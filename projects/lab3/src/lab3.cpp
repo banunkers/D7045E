@@ -84,7 +84,6 @@ void Lab3::initScene() {
         createSimpleCube(Color(1.0f, 0.0f, 0.0f, 1.0f), glm::vec3(-0.85f, 0.0f, 0.0f)),
         createSimpleCube(Color(0.0f, 1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f)),
         createSimpleCube(Color(0.0f, 0.0f, 1.0f, 1.0f), glm::vec3(0.85f, 0.0f, 0.0f))
-
     };
     this->camera = new Camera(cameraPos, cameraTarget);
 }

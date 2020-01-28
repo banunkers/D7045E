@@ -15,7 +15,7 @@ ShaderProgram::~ShaderProgram() {
 void ShaderProgram::linkShaders() {
     this->program = glCreateProgram();
 
-    for (auto& shader: shaders) {
+    for (auto& shader: this->shaders) {
         glAttachShader(this->program, shader.getHandle());
     }
 
