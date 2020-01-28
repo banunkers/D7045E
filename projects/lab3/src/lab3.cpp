@@ -14,7 +14,8 @@ const GLfloat rotAngle = 10.0f;
 unsigned int focusedObject = 0;
 
 // camera settings
-const glm::vec3 cameraPos = glm::vec3(-3.0f, 0.0f, 0.0f);
+// const glm::vec3 cameraPos = glm::vec3(-3.0f, 0.0f, 0.0f);
+const glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 const glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
 Lab3::Lab3() {}

@@ -16,22 +16,27 @@ class SimpleMaterial : public Material {
             uniform mat4 u_view;
             uniform mat4 u_projection;
 
+            layout(location=0) out vec4 position;
+
             void main()
             {
-                gl_Position = u_projection * u_view * u_model * vec4(a_position, 1);
+                position = u_projection * u_view * u_model * vec4(a_position, 1);
+                gl_Position = position;
             }
         )";
         static constexpr const GLchar* fragmentShader = R"(
             #version 310 es
             precision mediump float;
             
+            layout(location=0) in vec4 a_position;
+
             uniform vec4 u_color;
 
             out vec4 Color;
             
             void main()
             {
-               Color = u_color;
+                Color = vec4(u_color.r / a_position.z, u_color.g / a_position.z, u_color.b / a_position.z, u_color.a);
             }
         )";
 
