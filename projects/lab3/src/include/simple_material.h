@@ -25,7 +25,7 @@ class SimpleMaterial : public Material {
                 gl_Position = position;
             }
         )";
-        // here a_distance is the distance between the objects position and
+        // here a_distance is the distance between the vertex position and
         // the static cameras position (light source)
         static constexpr const GLchar* fragmentShader = R"(
             #version 310 es
