@@ -7,5 +7,4 @@ Node::Node(glm::mat4x4 model) {
 
 void Node::add(Node* node) {
     this->children.push_back(node);
-    this->update();
 }

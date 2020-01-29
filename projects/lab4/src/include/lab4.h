@@ -8,11 +8,11 @@
 #include "graphic_node.h"
 #include "camera.h"
 
-class Lab3 : public Core::App {
+class Lab4 : public Core::App {
     public:
         
-        Lab3();
-        ~Lab3();
+        Lab4();
+        ~Lab4();
 
         bool Open();
         void Run();

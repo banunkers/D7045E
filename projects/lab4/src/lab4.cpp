@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-#include "lab3.h"
+#include "lab4.h"
 #include "simple_cube.h"
 #include "types.h"
 
@@ -18,10 +18,10 @@ unsigned int focusedObject = 0;
 const glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 const glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
-Lab3::Lab3() {}
-Lab3::~Lab3() {}
+Lab4::Lab4() {}
+Lab4::~Lab4() {}
 
-bool Lab3::Open() {
+bool Lab4::Open() {
     App::Open();
 
     this->window = new Display::Window;
@@ -79,7 +79,7 @@ bool Lab3::Open() {
 /**
  * Creates a scene consisting of graphic nodes and a camera
  **/
-void Lab3::initScene() {
+void Lab4::initScene() {
     this->scene = std::vector<GraphicNode> {
         createSimpleCube(Color(1.0f, 0.0f, 0.0f, 1.0f), glm::vec3(-0.85f, 0.0f, 0.0f)),
         createSimpleCube(Color(0.0f, 1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -88,7 +88,7 @@ void Lab3::initScene() {
     this->camera = new Camera(cameraPos, cameraTarget);
 }
 
-void Lab3::Run() {
+void Lab4::Run() {
     while (this->window->IsOpen()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         this->window->Update();
