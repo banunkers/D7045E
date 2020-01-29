@@ -21,7 +21,7 @@ class SimpleMaterial : public Material {
             void main()
             {
                 vec4 position = u_projection * u_view * u_model * vec4(a_position, 1);
-                dist = distance(u_view * vec4(1.0f), position);
+                dist = distance(u_view[3].xyzw, position);
                 gl_Position = position;
             }
         )";
