@@ -33,6 +33,7 @@ bool Lab3::Open() {
                     break;
                 case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3:
                     focusedObject = key - GLFW_KEY_1;
+                    printf("Object %u focused\n", focusedObject + 1);
                     break;
                 case GLFW_KEY_W:
                     this->scene[focusedObject].translate(glm::vec3(0.0f, 0.0f, -transDistance));
@@ -69,7 +70,6 @@ bool Lab3::Open() {
     if (this->window->Open()) {
         glClearColor(1.0f, 1.0f, 0.6f, 1.0f);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
         initScene();
         return true;
     }
