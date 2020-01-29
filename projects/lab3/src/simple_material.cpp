@@ -23,7 +23,7 @@ SimpleMaterial::SimpleMaterial(Color color) : Material(
 void SimpleMaterial::applyMaterial(glm::mat4 transform, glm::mat4 view) {
     this->shaderProgram->activateProgram();
 
-    // model
+    // model = object local space pos
     GLint modelUniformLoc = glGetUniformLocation(this->shaderProgram->program, "u_model");
     if (modelUniformLoc != -1) {
         glUniformMatrix4fv(modelUniformLoc, 1, GL_FALSE, glm::value_ptr(transform));
@@ -31,16 +31,16 @@ void SimpleMaterial::applyMaterial(glm::mat4 transform, glm::mat4 view) {
         printf("Failed to locate model uniform for SimpleMaterial\n");
     }
 
-    // view
+    // view = world seen from the cameras view
     GLint viewUniformLoc = glGetUniformLocation(this->shaderProgram->program, "u_view");
     if (viewUniformLoc != -1) {
-        // glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)); // TODO: should be camera position
+        // glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)); // TODO: should be camera view
         glUniformMatrix4fv(viewUniformLoc, 1, GL_FALSE, glm::value_ptr(view));
     } else {
         printf("Failed to locate view uniform for SimpleMaterial\n");
     }
 
-    // projection
+    // projection 
     GLint projUniformLoc = glGetUniformLocation(this->shaderProgram->program, "u_projection");
     if (projUniformLoc != -1) {
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
