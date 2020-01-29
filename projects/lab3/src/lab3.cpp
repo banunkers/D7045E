@@ -77,7 +77,7 @@ bool Lab3::Open() {
 }
 
 /**
- * Creates a scene consisting of graphic nodes
+ * Creates a scene consisting of graphic nodes and a camera
  **/
 void Lab3::initScene() {
     this->scene = std::vector<GraphicNode> {
