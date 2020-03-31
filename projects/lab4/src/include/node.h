@@ -11,11 +11,10 @@
 class Node {
     private:
         std::vector<Node*> children;
-
-    protected:
-        glm::mat4 model;
     
     public:
+        glm::mat4 model;
+
         Node(glm::mat4 model);
 
         virtual void update() {} // update does nothing if not redefined by subclass

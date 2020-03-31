@@ -31,35 +31,18 @@ bool Lab4::Open() {
                 case GLFW_KEY_ESCAPE:
                     this->window->Close();
                     break;
-                case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3:
-                    focusedObject = key - GLFW_KEY_1;
-                    printf("Object %u focused\n", focusedObject + 1);
+                case GLFW_KEY_C:
+                    this->controlMode = Mode::CAMERA;
                     break;
-                case GLFW_KEY_W:
-                    this->scene[focusedObject].translate(glm::vec3(0.0f, 0.0f, -transDistance));
-                    break;
-                case GLFW_KEY_S:
-                    this->scene[focusedObject].translate(glm::vec3(0.0f, 0.0f, transDistance));
-                    break;
-                case GLFW_KEY_A:
-                    this->scene[focusedObject].translate(glm::vec3(-transDistance, 0.0f, 0.0f));
-                    break;
-                case GLFW_KEY_D:
-                    this->scene[focusedObject].translate(glm::vec3(transDistance, 0.0f, 0.0f));
-                    break;
-                case GLFW_KEY_LEFT:
-                    this->scene[focusedObject].rotate(-rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-                    break;
-                case GLFW_KEY_RIGHT:
-                    this->scene[focusedObject].rotate(rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-                    break;
-                case GLFW_KEY_UP:
-                    this->scene[focusedObject].rotate(-rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-                    break;
-                case GLFW_KEY_DOWN:
-                    this->scene[focusedObject].rotate(rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+                case GLFW_KEY_O:
+                    this->controlMode = Mode::OBJECT;
                     break;
                 default:
+                    if (this->controlMode == Mode::OBJECT) {
+                        ControlObject(action, key);
+                    } else {
+                        ControlCamera(action, key);
+                    }
                     break;
             }
         }
@@ -94,9 +77,83 @@ void Lab4::Run() {
         this->window->Update();
 
         for (auto& object : this->scene) {
-            object.draw(this->camera->getView());
+            object.draw(this->camera->model);
         }
 
         this->window->SwapBuffers();
+    }
+}
+
+void Lab4::ControlObject(int32 action, int32 key) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        switch (key) {
+            case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3:
+                focusedObject = key - GLFW_KEY_1;
+                printf("Object %u focused\n", focusedObject + 1);
+                break;
+            case GLFW_KEY_W:
+                this->scene[focusedObject].translate(glm::vec3(0.0f, 0.0f, -transDistance));
+                break;
+            case GLFW_KEY_S:
+                this->scene[focusedObject].translate(glm::vec3(0.0f, 0.0f, transDistance));
+                break;
+            case GLFW_KEY_A:
+                this->scene[focusedObject].translate(glm::vec3(-transDistance, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_D:
+                this->scene[focusedObject].translate(glm::vec3(transDistance, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_LEFT:
+                this->scene[focusedObject].rotate(-rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+                break;
+            case GLFW_KEY_RIGHT:
+                this->scene[focusedObject].rotate(rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+                break;
+            case GLFW_KEY_UP:
+                this->scene[focusedObject].rotate(-rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_DOWN:
+                this->scene[focusedObject].rotate(rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void Lab4::ControlCamera(int32 action, int32 key) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        switch (key) {
+            case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3:
+                focusedObject = key - GLFW_KEY_1;
+                printf("Object %u focused\n", focusedObject + 1);
+                break;
+            case GLFW_KEY_W:
+                this->camera->translate(glm::vec3(0.0f, 0.0f, -transDistance));
+                break;
+            case GLFW_KEY_S:
+                this->camera->translate(glm::vec3(0.0f, 0.0f, transDistance));
+                break;
+            case GLFW_KEY_A:
+                this->camera->translate(glm::vec3(-transDistance, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_D:
+                this->camera->translate(glm::vec3(transDistance, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_LEFT:
+                this->camera->rotate(-rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+                break;
+            case GLFW_KEY_RIGHT:
+                this->camera->rotate(rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+                break;
+            case GLFW_KEY_UP:
+                this->camera->rotate(-rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_DOWN:
+                this->camera->rotate(rotAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+                break;
+            default:
+                break;
+        }
     }
 }
