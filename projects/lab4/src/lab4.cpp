@@ -14,8 +14,8 @@ const GLfloat rotAngle = 10.0f;
 unsigned int focusedObject = 0;
 
 // camera settings
-// const glm::vec3 cameraPos = glm::vec3(-3.0f, 0.0f, 0.0f);
-const glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+//const glm::vec3 cameraPos = glm::vec3(-3.0f, 0.0f, 0.0f); // View from side
+const glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f); // View from front
 const glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
 Lab4::Lab4() {}
@@ -25,7 +25,9 @@ bool Lab4::Open() {
     App::Open();
 
     this->window = new Display::Window;
-    this->window->SetKeyPressFunction([this](int32 key, int32 scancode, int32 action, int32 mods) {
+    this->window->SetKeyPressFunction(
+        [this](int32 key, int32 scancode, int32 action, int32 mods
+    ) {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
             switch (key) {
                 case GLFW_KEY_ESCAPE:
@@ -33,8 +35,10 @@ bool Lab4::Open() {
                     break;
                 case GLFW_KEY_C:
                     this->controlMode = Mode::CAMERA;
+                    printf("Controlling camera\n");
                     break;
                 case GLFW_KEY_O:
+                    printf("Controlling objects\n");
                     this->controlMode = Mode::OBJECT;
                     break;
                 default:
@@ -47,7 +51,7 @@ bool Lab4::Open() {
             }
         }
     });
-    this->window->SetTitle(std::string("Lab 3"));
+    this->window->SetTitle(std::string("Lab 4"));
     this->window->SetSize(1500, 1500);
 
     if (this->window->Open()) {
@@ -129,17 +133,17 @@ void Lab4::ControlCamera(int32 action, int32 key) {
                 printf("Object %u focused\n", focusedObject + 1);
                 break;
             case GLFW_KEY_W:
-                this->camera->translate(glm::vec3(0.0f, 0.0f, -transDistance));
-                break;
-            case GLFW_KEY_S:
                 this->camera->translate(glm::vec3(0.0f, 0.0f, transDistance));
                 break;
-            case GLFW_KEY_A:
-                this->camera->translate(glm::vec3(-transDistance, 0.0f, 0.0f));
+            case GLFW_KEY_S:
+                this->camera->translate(glm::vec3(0.0f, 0.0f, -transDistance));
                 break;
-            case GLFW_KEY_D:
-                this->camera->translate(glm::vec3(transDistance, 0.0f, 0.0f));
-                break;
+            /* case GLFW_KEY_A: */
+            /*     this->camera->translate(glm::vec3(-transDistance, 0.0f, 0.0f)); */
+            /*     break; */
+            /* case GLFW_KEY_D: */
+            /*     this->camera->translate(glm::vec3(transDistance, 0.0f, 0.0f)); */
+            /*     break; */
             case GLFW_KEY_LEFT:
                 this->camera->rotate(-rotAngle, glm::vec3(0.0f, 1.0f, 0.0f));
                 break;

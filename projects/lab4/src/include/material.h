@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/mat4x2.hpp>
+
 #include "shader_program.h"
 
 class Material {

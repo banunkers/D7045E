@@ -15,3 +15,4 @@ void GraphicNode::draw(glm::mat4 view) {
 void GraphicNode::update() {
     
 }
+
